@@ -17,6 +17,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         com.l1khith.matrix28.data.AppContext.init(applicationContext)
+        com.google.android.gms.ads.MobileAds.initialize(this)
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 

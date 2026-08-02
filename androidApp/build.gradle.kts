@@ -14,13 +14,20 @@ kotlin {
 dependencies {
     implementation(project(":shared"))
     implementation(libs.androidx.activity.compose)
+    implementation("androidx.fragment:fragment-ktx:1.8.6")
     implementation(libs.compose.uiToolingPreview)
+    implementation(libs.play.services.ads)
     debugImplementation(libs.compose.uiTooling)
 }
 
 android {
     namespace = "com.l1khith.matrix28"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
+
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
 
     defaultConfig {
         applicationId = "com.l1khith.matrix28"

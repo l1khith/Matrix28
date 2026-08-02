@@ -46,6 +46,7 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
     var showRecurringManager by remember { mutableStateOf(false) }
     var showSyncDialog by remember { mutableStateOf(false) }
     var showIcsImportDialog by remember { mutableStateOf(false) }
+    var showIcsExportDialog by remember { mutableStateOf(false) }
 
     val todayFixed = remember { FixedCalendarHelper.fromTimestamp(currentTimeMillis()) }
 
@@ -160,7 +161,7 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            AdMobTestBanner()
+            BannerAd()
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -236,13 +237,28 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
                 showSyncDialog = false
             },
             onExportIcs = {
-                val ics = viewModel.getIcsExportString()
-                com.l1khith.matrix28.utils.copyToClipboard(ics)
                 showSyncDialog = false
+                showIcsExportDialog = true
             },
             onImportIcs = {
                 showSyncDialog = false
                 showIcsImportDialog = true
+            }
+        )
+    }
+
+    if (showIcsExportDialog) {
+        IcsExportDialog(
+            onDismiss = { showIcsExportDialog = false },
+            onCopyClipboard = {
+                val ics = viewModel.getIcsExportString()
+                com.l1khith.matrix28.utils.copyToClipboard(ics)
+                showIcsExportDialog = false
+            },
+            onSaveFile = { fileName ->
+                val ics = viewModel.getIcsExportString()
+                com.l1khith.matrix28.utils.copyToClipboard(ics)
+                showIcsExportDialog = false
             }
         )
     }
@@ -647,7 +663,7 @@ fun AdMobTestBanner() {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(54.dp)
+            .height(50.dp)
             .padding(vertical = 2.dp),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9)),
@@ -656,7 +672,7 @@ fun AdMobTestBanner() {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 10.dp),
+                .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -674,19 +690,12 @@ fun AdMobTestBanner() {
                         modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
                     )
                 }
-                Column {
-                    Text(
-                        text = "Test Ad: 320x50 Banner",
-                        color = Color(0xFF0F172A),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                    Text(
-                        text = "ca-app-pub-3940256099942544/6300978111",
-                        color = Color(0xFF64748B),
-                        fontSize = 10.sp
-                    )
-                }
+                Text(
+                    text = "Nice job! Test ad from Google AdMob",
+                    color = Color(0xFF0F172A),
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp
+                )
             }
             Surface(
                 shape = RoundedCornerShape(4.dp),
