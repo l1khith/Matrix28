@@ -157,10 +157,7 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            val userTaskCount = tasks.count { !it.id.startsWith("sys_") }
-            val systemTaskCount = tasks.count { it.id.startsWith("sys_") }
-
-            TaskTestBanner(userTaskCount = userTaskCount, systemTaskCount = systemTaskCount)
+            AdMobTestBanner()
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -634,45 +631,63 @@ fun AgendaList(
 }
 
 @Composable
-fun TaskTestBanner(
-    userTaskCount: Int,
-    systemTaskCount: Int
-) {
+fun AdMobTestBanner() {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1B4B)),
-        border = BorderStroke(1.dp, Color(0xFF6366F1))
+            .height(54.dp)
+            .padding(vertical = 2.dp),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF1F5F9)),
+        border = BorderStroke(1.dp, Color(0xFFCBD5E1))
     ) {
         Row(
             modifier = Modifier
-                .padding(horizontal = 14.dp, vertical = 10.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
-                    shape = CircleShape,
-                    color = Color(0xFF6366F1),
-                    modifier = Modifier.size(8.dp)
-                ) {}
-                Spacer(modifier = Modifier.width(8.dp))
+                    shape = RoundedCornerShape(3.dp),
+                    color = Color(0xFFF59E0B),
+                    modifier = Modifier.padding(end = 8.dp)
+                ) {
+                    Text(
+                        text = "Ad",
+                        color = Color.Black,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                    )
+                }
+                Column {
+                    Text(
+                        text = "Test Ad: 320x50 Banner",
+                        color = Color(0xFF0F172A),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                    Text(
+                        text = "ca-app-pub-3940256099942544/6300978111",
+                        color = Color(0xFF64748B),
+                        fontSize = 10.sp
+                    )
+                }
+            }
+            Surface(
+                shape = RoundedCornerShape(4.dp),
+                color = Color(0xFF475569)
+            ) {
                 Text(
-                    text = "STATUS BANNER | User Tasks Highlighted",
-                    color = Color(0xFFA5B4FC),
+                    text = "AdMob",
+                    color = Color.White,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp
+                    fontSize = 10.sp,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
                 )
             }
-            Text(
-                text = "👤 $userTaskCount User • 📅 $systemTaskCount System",
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 11.sp
-            )
         }
     }
 }

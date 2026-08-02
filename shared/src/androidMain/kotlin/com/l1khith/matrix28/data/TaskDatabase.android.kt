@@ -236,24 +236,39 @@ actual class TaskDatabase actual constructor() {
 
     actual fun rolloverTasks(prevDate: String, currDate: String): Int {
         val db = helper.writableDatabase
+        // Delete generated recurring tasks from prevDate so they don't pile up
+        db.delete(TABLE_TASKS, "$COLUMN_ASSOCIATED_DATE = ? AND $COLUMN_IS_GENERATED = 1 AND $COLUMN_IS_COMPLETED = 0", arrayOf(prevDate))
         val values = ContentValues().apply {
             put(COLUMN_ASSOCIATED_DATE, currDate)
         }
         return db.update(
             TABLE_TASKS, values,
-            "$COLUMN_ASSOCIATED_DATE = ? AND $COLUMN_IS_COMPLETED = 0",
+            "$COLUMN_ASSOCIATED_DATE = ? AND $COLUMN_IS_GENERATED = 0 AND $COLUMN_IS_COMPLETED = 0",
             arrayOf(prevDate)
         )
     }
 
     actual fun catchUpRollover(currDate: String): Int {
         val db = helper.writableDatabase
+        // Delete all past uncompleted generated recurring instances so routines never pile up on today
+        db.delete(TABLE_TASKS, "$COLUMN_ASSOCIATED_DATE < ? AND $COLUMN_IS_GENERATED = 1 AND $COLUMN_IS_COMPLETED = 0", arrayOf(currDate))
+        // Purge any existing duplicate generated tasks for the same associated_date and recurring_parent_id
+        db.execSQL("""
+            DELETE FROM $TABLE_TASKS 
+            WHERE $COLUMN_IS_GENERATED = 1 AND rowid NOT IN (
+                SELECT MIN(rowid) 
+                FROM $TABLE_TASKS 
+                WHERE $COLUMN_IS_GENERATED = 1 
+                GROUP BY $COLUMN_ASSOCIATED_DATE, $COLUMN_RECURRING_PARENT_ID
+            )
+        """.trimIndent())
+        // Roll over ONLY manual user-created single tasks
         val values = ContentValues().apply {
             put(COLUMN_ASSOCIATED_DATE, currDate)
         }
         return db.update(
             TABLE_TASKS, values,
-            "$COLUMN_ASSOCIATED_DATE < ? AND $COLUMN_IS_COMPLETED = 0",
+            "$COLUMN_ASSOCIATED_DATE < ? AND $COLUMN_IS_GENERATED = 0 AND $COLUMN_IS_COMPLETED = 0",
             arrayOf(currDate)
         )
     }

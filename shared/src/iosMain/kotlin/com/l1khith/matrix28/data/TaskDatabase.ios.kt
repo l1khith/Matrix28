@@ -54,10 +54,11 @@ actual class TaskDatabase actual constructor() {
     }
 
     actual fun rolloverTasks(prevDate: String, currDate: String): Int {
+        tasks.removeAll { it.associatedDate == prevDate && it.isGenerated == 1 && !it.completed }
         var count = 0
-        val uncompleted = tasks.filter { it.dateStr == prevDate && !it.isCompleted }
-        tasks.removeAll { it.dateStr == prevDate && !it.isCompleted }
-        uncompleted.forEach { task ->
+        val uncompletedManual = tasks.filter { it.associatedDate == prevDate && it.isGenerated == 0 && !it.completed }
+        tasks.removeAll { it.associatedDate == prevDate && it.isGenerated == 0 && !it.completed }
+        uncompletedManual.forEach { task ->
             val rolled = task.copy(associatedDate = currDate)
             tasks.add(rolled)
             count++
@@ -66,10 +67,11 @@ actual class TaskDatabase actual constructor() {
     }
 
     actual fun catchUpRollover(currDate: String): Int {
+        tasks.removeAll { it.associatedDate < currDate && it.isGenerated == 1 && !it.completed }
         var count = 0
-        val uncompleted = tasks.filter { it.dateStr < currDate && !it.isCompleted }
-        tasks.removeAll { it.dateStr < currDate && !it.isCompleted }
-        uncompleted.forEach { task ->
+        val uncompletedManual = tasks.filter { it.associatedDate < currDate && it.isGenerated == 0 && !it.completed }
+        tasks.removeAll { it.associatedDate < currDate && it.isGenerated == 0 && !it.completed }
+        uncompletedManual.forEach { task ->
             val rolled = task.copy(associatedDate = currDate)
             tasks.add(rolled)
             count++
