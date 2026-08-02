@@ -173,6 +173,10 @@ fun IcsImportDialog(
     var icsText by remember { mutableStateOf("") }
     val primaryAccent = Color(0xFF3B82F6)
 
+    val pickFileLauncher = rememberFilePickerLauncher { fileContent ->
+        icsText = fileContent
+    }
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(20.dp),
@@ -192,37 +196,37 @@ fun IcsImportDialog(
                     fontSize = 18.sp
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
-                // Smart format conversion info badge
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = Color(0xFF1E293B),
-                    border = BorderStroke(1.dp, Color(0xFF334155))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier.padding(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Text(
+                        text = "Paste or Pick .ics Content:",
+                        color = Color(0xFF94A3B8),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Button(
+                        onClick = { pickFileLauncher() },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E293B)),
+                        border = BorderStroke(1.dp, primaryAccent),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                        modifier = Modifier.height(32.dp)
                     ) {
                         Text(
-                            text = "⚡ Auto-Format Converter:\nStandard 12-Month Gregorian events automatically convert & fit into your 13-Month Fixed Calendar grid.",
-                            color = Color(0xFF93C5FD),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium
+                            text = "📁 Pick File",
+                            color = primaryAccent,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
-
-                Text(
-                    text = "Paste or Pick .ics Event Content:",
-                    color = Color(0xFF94A3B8),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
                     value = icsText,
