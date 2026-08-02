@@ -49,8 +49,11 @@ object CalendarSyncHelper {
         var currentTitle = ""
         var currentDesc = ""
         var currentUid = ""
-        var currentTimestamp = currentTimeMillis()
+        var currentFixedDate: FixedDate = FixedCalendarHelper.fromTimestamp(currentTimeMillis())
+        var currentTimestamp: Long? = null
         var inEvent = false
+
+        val isNative13Month = icsContent.contains("X-13MONTH-CALENDAR") || icsContent.contains("PRODID:-//FixedCalendarPlanner")
 
         for (line in lines) {
             val trimmed = line.trim()
@@ -59,10 +62,10 @@ object CalendarSyncHelper {
                 currentTitle = "Untitled Event"
                 currentDesc = ""
                 currentUid = Uuid.random().toString()
-                currentTimestamp = currentTimeMillis()
+                currentFixedDate = FixedCalendarHelper.fromTimestamp(currentTimeMillis())
+                currentTimestamp = null
             } else if (trimmed == "END:VEVENT") {
                 if (inEvent) {
-                    val fixedDate = FixedCalendarHelper.fromTimestamp(currentTimestamp)
                     val isReminder = 0
                     val reminderTime: String? = null
 
@@ -71,10 +74,10 @@ object CalendarSyncHelper {
                             id = "ics_$currentUid",
                             title = currentTitle,
                             description = currentDesc.ifEmpty { null },
-                            associatedDate = fixedDate.toString(),
+                            associatedDate = currentFixedDate.toString(),
                             isReminder = isReminder,
                             reminderTime = reminderTime,
-                            utcTimestamp = if (isReminder == 1) currentTimestamp else null,
+                            utcTimestamp = currentTimestamp,
                             isCompleted = 0,
                             priority = 1
                         )
@@ -92,7 +95,9 @@ object CalendarSyncHelper {
                         key.startsWith("UID") -> currentUid = value
                         key.startsWith("DTSTART") -> {
                             val cleanVal = value.replace(";", "").replace(":", "")
-                            currentTimestamp = parseIcsDtStart(cleanVal)
+                            val parsed = parseIcsDtStart(cleanVal, isNative13Month)
+                            currentFixedDate = parsed.first
+                            currentTimestamp = parsed.second
                         }
                     }
                 }
@@ -119,7 +124,9 @@ object CalendarSyncHelper {
         return "${y}${m}${d}T${h}${min}${s}Z"
     }
 
-    private fun parseIcsDtStart(value: String): Long {
+    private fun parseIcsDtStart(value: String, isNative13Month: Boolean): Pair<FixedDate, Long?> {
+        val now = currentTimeMillis()
+        val defaultDate = FixedCalendarHelper.fromTimestamp(now)
         return try {
             val datePart = value.take(8)
             if (datePart.length == 8) {
@@ -127,19 +134,26 @@ object CalendarSyncHelper {
                 val m = datePart.substring(4, 6).toInt()
                 val d = datePart.substring(6, 8).toInt()
 
-                var timePart = if (value.contains("T")) value.substringAfter("T").take(6) else "000000"
+                val timePart = if (value.contains("T")) value.substringAfter("T").take(6) else "000000"
                 val h = timePart.substring(0, 2).toIntOrNull() ?: 0
                 val min = timePart.substring(2, 4).toIntOrNull() ?: 0
                 val timeStr = "$h:$min"
 
-                val fixedDate = FixedCalendarHelper.parseDateStr("$y-$m-$d")
-                    ?: com.l1khith.matrix28.utils.FixedDate(y, m, d)
-                FixedCalendarHelper.toTimestamp(fixedDate, timeStr)
+                if (isNative13Month) {
+                    val fixedDate = FixedDate(y, m.coerceIn(1, 13), d.coerceIn(1, 29))
+                    val ts = FixedCalendarHelper.toTimestamp(fixedDate, timeStr)
+                    Pair(fixedDate, ts)
+                } else {
+                    // Standard 12-month Gregorian date -> convert to 13-month FixedDate
+                    val fixedDate = FixedCalendarHelper.gregorianToFixed(y, m, d)
+                    val ts = FixedCalendarHelper.toTimestamp(fixedDate, timeStr)
+                    Pair(fixedDate, ts)
+                }
             } else {
-                currentTimeMillis()
+                Pair(defaultDate, now)
             }
         } catch (e: Exception) {
-            currentTimeMillis()
+            Pair(defaultDate, now)
         }
     }
 }

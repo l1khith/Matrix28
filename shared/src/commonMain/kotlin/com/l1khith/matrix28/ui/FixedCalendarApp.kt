@@ -46,7 +46,6 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
     var showRecurringManager by remember { mutableStateOf(false) }
     var showSyncDialog by remember { mutableStateOf(false) }
     var showIcsImportDialog by remember { mutableStateOf(false) }
-    var showIcsExportDialog by remember { mutableStateOf(false) }
 
     val todayFixed = remember { FixedCalendarHelper.fromTimestamp(currentTimeMillis()) }
 
@@ -236,29 +235,9 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
                 viewModel.importSystemCalendar()
                 showSyncDialog = false
             },
-            onExportIcs = {
-                showSyncDialog = false
-                showIcsExportDialog = true
-            },
             onImportIcs = {
                 showSyncDialog = false
                 showIcsImportDialog = true
-            }
-        )
-    }
-
-    if (showIcsExportDialog) {
-        IcsExportDialog(
-            onDismiss = { showIcsExportDialog = false },
-            onCopyClipboard = {
-                val ics = viewModel.getIcsExportString()
-                com.l1khith.matrix28.utils.copyToClipboard(ics)
-                showIcsExportDialog = false
-            },
-            onSaveFile = { fileName ->
-                val ics = viewModel.getIcsExportString()
-                com.l1khith.matrix28.utils.copyToClipboard(ics)
-                showIcsExportDialog = false
             }
         )
     }

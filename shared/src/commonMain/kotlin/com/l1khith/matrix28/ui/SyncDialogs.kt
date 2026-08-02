@@ -9,7 +9,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,7 +24,6 @@ import androidx.compose.ui.window.Dialog
 fun SyncDialog(
     onDismiss: () -> Unit,
     onSyncSystem: () -> Unit,
-    onExportIcs: () -> Unit,
     onImportIcs: () -> Unit
 ) {
     val cardBg = Color(0xFF1E293B)
@@ -46,7 +44,7 @@ fun SyncDialog(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "Calendar Sync & Exchange",
+                    text = "Calendar Sync & Import",
                     color = titleColor,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
@@ -94,7 +92,7 @@ fun SyncDialog(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Imports events from Android's system calendars",
+                                text = "Imports events from Android system calendars",
                                 color = subtitleColor,
                                 fontSize = 12.sp
                             )
@@ -104,57 +102,7 @@ fun SyncDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Card 2: Export ICS
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onExportIcs() },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = cardBg)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF10B981).copy(alpha = 0.2f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Share,
-                                contentDescription = "Export ICS",
-                                tint = Color(0xFF10B981),
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(14.dp))
-
-                        Column {
-                            Text(
-                                text = "Export to iCalendar (.ics)",
-                                color = titleColor,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Export with custom filename or copy ICS text",
-                                color = subtitleColor,
-                                fontSize = 12.sp
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // Card 3: Import ICS
+                // Card 2: Import ICS File / Text
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -187,14 +135,14 @@ fun SyncDialog(
 
                         Column {
                             Text(
-                                text = "Import from iCalendar (.ics)",
+                                text = "Import iCalendar (.ics File / Text)",
                                 color = titleColor,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 15.sp
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Import via file selection or text paste",
+                                text = "Pick .ics file from device or paste text",
                                 color = subtitleColor,
                                 fontSize = 12.sp
                             )
@@ -210,139 +158,6 @@ fun SyncDialog(
                 ) {
                     TextButton(onClick = onDismiss) {
                         Text("Close", color = accentBlue, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun IcsExportDialog(
-    onDismiss: () -> Unit,
-    onCopyClipboard: () -> Unit,
-    onSaveFile: (fileName: String) -> Unit
-) {
-    val options = listOf(
-        "matrix28_schedule.ics",
-        "fixed_calendar_2026.ics",
-        "backup_agenda.ics"
-    )
-    var selectedOption by remember { mutableStateOf(options[0]) }
-    var customFileName by remember { mutableStateOf("") }
-    var isCustom by remember { mutableStateOf(false) }
-
-    val primaryAccent = Color(0xFF10B981)
-
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = Color.Black,
-            border = BorderStroke(1.dp, Color(0xFF059669)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(20.dp)
-                    .fillMaxWidth()
-            ) {
-                Text(
-                    text = "Export iCalendar (.ics)",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                Text(
-                    text = "Select Filename Option:",
-                    color = Color(0xFF94A3B8),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                options.forEach { option ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                selectedOption = option
-                                isCustom = false
-                            }
-                            .padding(vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = (!isCustom && selectedOption == option),
-                            onClick = {
-                                selectedOption = option
-                                isCustom = false
-                            },
-                            colors = RadioButtonDefaults.colors(selectedColor = primaryAccent)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(option, color = Color.White, fontSize = 14.sp)
-                    }
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { isCustom = true }
-                        .padding(vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = isCustom,
-                        onClick = { isCustom = true },
-                        colors = RadioButtonDefaults.colors(selectedColor = primaryAccent)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Custom filename...", color = Color.White, fontSize = 14.sp)
-                }
-
-                if (isCustom) {
-                    OutlinedTextField(
-                        value = customFileName,
-                        onValueChange = { customFileName = it },
-                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                        label = { Text("e.g. my_custom_events.ics", color = Color(0xFF94A3B8)) },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedBorderColor = primaryAccent,
-                            unfocusedBorderColor = Color(0xFF1E293B)
-                        )
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = {
-                            val finalName = if (isCustom && customFileName.isNotBlank()) {
-                                if (customFileName.endsWith(".ics")) customFileName else "$customFileName.ics"
-                            } else {
-                                selectedOption
-                            }
-                            onSaveFile(finalName)
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = primaryAccent),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Export .ics File ($ {if (isCustom && customFileName.isNotBlank()) customFileName else selectedOption})", color = Color.White)
-                    }
-
-                    OutlinedButton(
-                        onClick = onCopyClipboard,
-                        modifier = Modifier.fillMaxWidth(),
-                        border = BorderStroke(1.dp, Color(0xFF64748B))
-                    ) {
-                        Text("Copy Raw ICS Code to Clipboard", color = Color.White)
                     }
                 }
             }
@@ -376,10 +191,32 @@ fun IcsImportDialog(
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
-                Spacer(modifier = Modifier.height(12.dp))
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Smart format conversion info badge
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color(0xFF1E293B),
+                    border = BorderStroke(1.dp, Color(0xFF334155))
+                ) {
+                    Row(
+                        modifier = Modifier.padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "⚡ Auto-Format Converter:\nStandard 12-Month Gregorian events automatically convert & fit into your 13-Month Fixed Calendar grid.",
+                            color = Color(0xFF93C5FD),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = "Paste .ics Event Content:",
+                    text = "Paste or Pick .ics Event Content:",
                     color = Color(0xFF94A3B8),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
@@ -392,7 +229,7 @@ fun IcsImportDialog(
                     onValueChange = { icsText = it },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(150.dp),
+                        .height(140.dp),
                     label = { Text("BEGIN:VCALENDAR ... END:VCALENDAR", color = Color(0xFF94A3B8)) },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.White,
@@ -421,7 +258,7 @@ fun IcsImportDialog(
                         colors = ButtonDefaults.buttonColors(containerColor = primaryAccent),
                         enabled = icsText.isNotBlank()
                     ) {
-                        Text("Import Tasks", color = Color.White)
+                        Text("Import & Convert", color = Color.White)
                     }
                 }
             }

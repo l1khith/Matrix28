@@ -40,6 +40,28 @@ object FixedCalendarHelper {
     }
 
     /**
+     * Converts a 12-month Gregorian date (Year, Month 1-12, Day 1-31) to 13-month FixedDate
+     */
+    fun gregorianToFixed(year: Int, month: Int, day: Int): FixedDate {
+        val daysInMonths = if (isLeapYear(year)) {
+            intArrayOf(0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+        } else {
+            intArrayOf(0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+        }
+        
+        val safeMonth = month.coerceIn(1, 12)
+        val maxDayInM = daysInMonths[safeMonth]
+        val safeDay = day.coerceIn(1, maxDayInM)
+        
+        var dayOfYear = safeDay
+        for (m in 1 until safeMonth) {
+            dayOfYear += daysInMonths[m]
+        }
+        
+        return fromDayOfYear(year, dayOfYear)
+    }
+
+    /**
      * Converts a Gregorian day of year (1-365/366) to 13-month FixedDate
      */
     fun fromDayOfYear(year: Int, dayOfYear: Int): FixedDate {
