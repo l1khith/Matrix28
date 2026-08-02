@@ -208,7 +208,7 @@ actual class TaskDatabase actual constructor() {
         val db = helper.readableDatabase
         val cursor = db.query(
             TABLE_RECURRING, null,
-            "$COLUMN_REC_IS_ACTIVE = 1 AND ($COLUMN_REC_END_DATE IS NULL OR $COLUMN_REC_END_DATE >= ?)",
+            "$COLUMN_REC_IS_ACTIVE = 1 AND ($COLUMN_REC_END_DATE IS NULL OR $COLUMN_REC_END_DATE = '' OR $COLUMN_REC_END_DATE >= ?)",
             arrayOf(currentDateStr), null, null, null
         )
         cursor.use { c ->
@@ -241,7 +241,7 @@ actual class TaskDatabase actual constructor() {
         }
         return db.update(
             TABLE_TASKS, values,
-            "$COLUMN_ASSOCIATED_DATE = ? AND $COLUMN_IS_COMPLETED = 0 AND $COLUMN_IS_REMINDER = 0",
+            "$COLUMN_ASSOCIATED_DATE = ? AND $COLUMN_IS_COMPLETED = 0",
             arrayOf(prevDate)
         )
     }
@@ -253,7 +253,7 @@ actual class TaskDatabase actual constructor() {
         }
         return db.update(
             TABLE_TASKS, values,
-            "$COLUMN_ASSOCIATED_DATE < ? AND $COLUMN_IS_COMPLETED = 0 AND $COLUMN_IS_REMINDER = 0",
+            "$COLUMN_ASSOCIATED_DATE < ? AND $COLUMN_IS_COMPLETED = 0",
             arrayOf(currDate)
         )
     }

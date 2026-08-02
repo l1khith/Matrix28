@@ -44,7 +44,9 @@ actual class TaskDatabase actual constructor() {
     }
 
     actual fun getActiveRecurringTasks(currentDateStr: String): List<RecurringTask> {
-        return recurringTasks.toList()
+        return recurringTasks.filter { task ->
+            task.isActive && (task.endDate.isNullOrEmpty() || task.endDate >= currentDateStr)
+        }
     }
 
     actual fun deleteRecurringTask(id: String): Boolean {
@@ -54,8 +56,9 @@ actual class TaskDatabase actual constructor() {
     actual fun rolloverTasks(prevDate: String, currDate: String): Int {
         var count = 0
         val uncompleted = tasks.filter { it.dateStr == prevDate && !it.isCompleted }
+        tasks.removeAll { it.dateStr == prevDate && !it.isCompleted }
         uncompleted.forEach { task ->
-            val rolled = task.copy(id = task.id + "_rolled_" + currDate, dateStr = currDate)
+            val rolled = task.copy(associatedDate = currDate)
             tasks.add(rolled)
             count++
         }
@@ -63,7 +66,15 @@ actual class TaskDatabase actual constructor() {
     }
 
     actual fun catchUpRollover(currDate: String): Int {
-        return 0
+        var count = 0
+        val uncompleted = tasks.filter { it.dateStr < currDate && !it.isCompleted }
+        tasks.removeAll { it.dateStr < currDate && !it.isCompleted }
+        uncompleted.forEach { task ->
+            val rolled = task.copy(associatedDate = currDate)
+            tasks.add(rolled)
+            count++
+        }
+        return count
     }
 
     actual fun insertGeneratedTask(task: AppTask): Boolean {

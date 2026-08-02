@@ -38,6 +38,7 @@ class FixedCalendarViewModel : ViewModel() {
 
     init {
         checkAndRunRollover()
+        importSystemCalendar()
         loadState()
     }
 
@@ -266,7 +267,16 @@ class FixedCalendarViewModel : ViewModel() {
     fun checkAndRunRollover() {
         val currentDateStr = FixedCalendarHelper.fromTimestamp(currentTimeMillis()).toString()
         db.catchUpRollover(currentDateStr)
-        generateRecurringInstancesForDate(currentDateStr)
+        generateRecurringInstancesForMonth(_selectedDate.value.year, _selectedDate.value.month)
+    }
+
+    fun generateRecurringInstancesForMonth(year: Int, month: Int) {
+        val isLeap = FixedCalendarHelper.isLeapYear(year)
+        val maxDays = if (month == 6 && isLeap) 29 else if (month == 13) 29 else 28
+        for (day in 1..maxDays) {
+            val dateStr = FixedDate(year, month, day, isLeapDay = (month == 6 && day == 29), isYearDay = (month == 13 && day == 29)).toString()
+            generateRecurringInstancesForDate(dateStr)
+        }
     }
 
     // --- Sync & ICS Actions ---
