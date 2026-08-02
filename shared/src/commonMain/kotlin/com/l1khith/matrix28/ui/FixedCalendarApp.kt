@@ -157,6 +157,13 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            val userTaskCount = tasks.count { !it.id.startsWith("sys_") }
+            val systemTaskCount = tasks.count { it.id.startsWith("sys_") }
+
+            TaskTestBanner(userTaskCount = userTaskCount, systemTaskCount = systemTaskCount)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -627,6 +634,50 @@ fun AgendaList(
 }
 
 @Composable
+fun TaskTestBanner(
+    userTaskCount: Int,
+    systemTaskCount: Int
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1B4B)),
+        border = BorderStroke(1.dp, Color(0xFF6366F1))
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 14.dp, vertical = 10.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    shape = CircleShape,
+                    color = Color(0xFF6366F1),
+                    modifier = Modifier.size(8.dp)
+                ) {}
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "STATUS BANNER | User Tasks Highlighted",
+                    color = Color(0xFFA5B4FC),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp
+                )
+            }
+            Text(
+                text = "👤 $userTaskCount User • 📅 $systemTaskCount System",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 11.sp
+            )
+        }
+    }
+}
+
+@Composable
 fun ReminderItem(
     task: AppTask,
     onToggleComplete: (AppTask) -> Unit,
@@ -637,11 +688,19 @@ fun ReminderItem(
     accentColor: Color,
     cardBg: Color
 ) {
+    val isUserCreated = !task.id.startsWith("sys_")
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onToggleComplete(task) },
-        colors = CardDefaults.cardColors(containerColor = cardBg),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isUserCreated) Color(0xFF231B4D) else cardBg
+        ),
+        border = BorderStroke(
+            width = if (isUserCreated) 1.dp else 0.dp,
+            color = if (isUserCreated) Color(0xFF6366F1) else Color.Transparent
+        ),
         shape = RoundedCornerShape(14.dp)
     ) {
         Row(
@@ -677,6 +736,22 @@ fun ReminderItem(
 
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (isUserCreated) {
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = Color(0xFF6366F1).copy(alpha = 0.3f),
+                                border = BorderStroke(1.dp, Color(0xFF818CF8)),
+                                modifier = Modifier.padding(end = 6.dp)
+                            ) {
+                                Text(
+                                    text = "👤 User Task",
+                                    color = Color(0xFFA5B4FC),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp,
+                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.5.dp)
+                                )
+                            }
+                        }
                         Surface(
                             shape = RoundedCornerShape(4.dp),
                             color = Color(0xFF0F172A),
@@ -749,12 +824,19 @@ fun TodoItem(
     cardBg: Color
 ) {
     val isGeneratedTask = task.isGenerated == 1
+    val isUserCreated = !task.id.startsWith("sys_")
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onToggleComplete(task) },
-        colors = CardDefaults.cardColors(containerColor = cardBg),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isUserCreated) Color(0xFF231B4D) else cardBg
+        ),
+        border = BorderStroke(
+            width = if (isUserCreated) 1.dp else 0.dp,
+            color = if (isUserCreated) Color(0xFF6366F1) else Color.Transparent
+        ),
         shape = RoundedCornerShape(14.dp)
     ) {
         Row(
@@ -768,7 +850,7 @@ fun TodoItem(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Square checkbox visual like in screenshot
+                // Square checkbox visual
                 Box(
                     modifier = Modifier
                         .size(22.dp)
@@ -791,6 +873,22 @@ fun TodoItem(
 
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (isUserCreated) {
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = Color(0xFF6366F1).copy(alpha = 0.3f),
+                                border = BorderStroke(1.dp, Color(0xFF818CF8)),
+                                modifier = Modifier.padding(end = 6.dp)
+                            ) {
+                                Text(
+                                    text = "👤 User Task",
+                                    color = Color(0xFFA5B4FC),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp,
+                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.5.dp)
+                                )
+                            }
+                        }
                         Surface(
                             shape = RoundedCornerShape(4.dp),
                             color = Color(0xFF334155),

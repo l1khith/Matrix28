@@ -250,6 +250,9 @@ class FixedCalendarViewModel : ViewModel() {
         val month = parts[1].toIntOrNull() ?: return false
         val day = parts[2].toIntOrNull() ?: return false
 
+        val createdDateStr = FixedCalendarHelper.fromTimestamp(master.createdAt).toString()
+        if (dateStr < createdDateStr) return false
+
         if (master.endDate != null && dateStr > master.endDate) return false
         if (day == 29 && (month == 6 || month == 13)) return false
         if (dayOfWeek == -1) return false
