@@ -31,7 +31,13 @@ actual class TaskDatabase actual constructor() {
     }
 
     actual fun getDatesWithActiveTasks(): Set<String> {
-        return tasks.filter { !it.isCompleted }.map { it.dateStr }.toSet()
+        return tasks.filter { !it.completed }.map { it.associatedDate }.toSet()
+    }
+
+    actual fun getTaskCountsPerDate(): Map<String, Int> {
+        return tasks.filter { !it.completed }
+            .groupBy { it.associatedDate }
+            .mapValues { it.value.size }
     }
 
     actual fun insertRecurringTask(task: RecurringTask): Boolean {

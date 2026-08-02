@@ -158,18 +158,32 @@ actual class TaskDatabase actual constructor() {
     }
 
     actual fun getDatesWithActiveTasks(): Set<String> {
-        val dates = mutableSetOf<String>()
+        val set = mutableSetOf<String>()
         val db = helper.readableDatabase
-        val cursor = db.query(
-            true, TABLE_TASKS, arrayOf(COLUMN_ASSOCIATED_DATE),
-            "$COLUMN_IS_COMPLETED = 0", null, null, null, null, null
+        val cursor = db.query(TABLE_TASKS, arrayOf(COLUMN_ASSOCIATED_DATE), "$COLUMN_IS_COMPLETED = 0", null, COLUMN_ASSOCIATED_DATE, null, null)
+        cursor.use { c ->
+            while (c.moveToNext()) {
+                set.add(c.getString(0))
+            }
+        }
+        return set
+    }
+
+    actual fun getTaskCountsPerDate(): Map<String, Int> {
+        val map = mutableMapOf<String, Int>()
+        val db = helper.readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT $COLUMN_ASSOCIATED_DATE, COUNT(*) FROM $TABLE_TASKS WHERE $COLUMN_IS_COMPLETED = 0 GROUP BY $COLUMN_ASSOCIATED_DATE",
+            null
         )
         cursor.use { c ->
             while (c.moveToNext()) {
-                dates.add(c.getString(0))
+                val date = c.getString(0)
+                val count = c.getInt(1)
+                map[date] = count
             }
         }
-        return dates
+        return map
     }
 
     actual fun insertRecurringTask(task: RecurringTask): Boolean {

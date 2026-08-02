@@ -122,9 +122,12 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            val taskCounts by viewModel.taskCountsPerDate
+
             CalendarMatrix(
                 selectedDate = selectedDate,
                 activeDates = activeDates,
+                taskCounts = taskCounts,
                 todayFixed = todayFixed,
                 onDateSelect = { viewModel.selectDate(it) },
                 primaryColor = primaryAccent,
@@ -349,6 +352,7 @@ fun MonthYearSelector(
 fun CalendarMatrix(
     selectedDate: FixedDate,
     activeDates: Set<String>,
+    taskCounts: Map<String, Int>,
     todayFixed: FixedDate,
     onDateSelect: (FixedDate) -> Unit,
     primaryColor: Color,
@@ -397,7 +401,7 @@ fun CalendarMatrix(
                     val dayNum = row * 7 + col
                     val cellDate = FixedDate(selectedDate.year, selectedDate.month, dayNum)
                     val cellDateStr = cellDate.toString()
-                    val hasTasks = activeDates.contains(cellDateStr)
+                    val taskCount = taskCounts[cellDateStr] ?: if (activeDates.contains(cellDateStr)) 1 else 0
                     val isCellSelected = selectedDate.month == cellDate.month && selectedDate.day == dayNum
                     val isCellToday = todayFixed.year == cellDate.year && todayFixed.month == cellDate.month && todayFixed.day == dayNum
 
@@ -434,14 +438,22 @@ fun CalendarMatrix(
                                 fontWeight = if (isCellSelected || isCellToday) FontWeight.Bold else FontWeight.Normal,
                                 fontSize = 14.sp
                             )
-                            if (hasTasks) {
+                            if (taskCount > 0) {
                                 Spacer(modifier = Modifier.height(2.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .size(4.dp)
-                                        .clip(CircleShape)
-                                        .background(if (isCellSelected) Color.White else orangeDotColor)
-                                )
+                                val dotsToShow = taskCount.coerceAtMost(3)
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    repeat(dotsToShow) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(3.5.dp)
+                                                .clip(CircleShape)
+                                                .background(if (isCellSelected) Color.White else orangeDotColor)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

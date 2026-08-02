@@ -8,6 +8,7 @@ expect class TaskDatabase() {
     fun getTasksForDate(dateStr: String): List<AppTask>
     fun getAllTasks(): List<AppTask>
     fun getDatesWithActiveTasks(): Set<String>
+    fun getTaskCountsPerDate(): Map<String, Int>
     
     // Recurring tasks
     fun insertRecurringTask(task: RecurringTask): Boolean

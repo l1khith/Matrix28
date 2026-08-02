@@ -32,6 +32,9 @@ class FixedCalendarViewModel : ViewModel() {
     private val _datesWithActiveTasks = mutableStateOf<Set<String>>(emptySet())
     val datesWithActiveTasks: State<Set<String>> = _datesWithActiveTasks
 
+    private val _taskCountsPerDate = mutableStateOf<Map<String, Int>>(emptyMap())
+    val taskCountsPerDate: State<Map<String, Int>> = _taskCountsPerDate
+
     // Recurring Tasks state
     private val _recurringTasks = mutableStateOf<List<RecurringTask>>(emptyList())
     val recurringTasks: State<List<RecurringTask>> = _recurringTasks
@@ -64,8 +67,9 @@ class FixedCalendarViewModel : ViewModel() {
 
     fun loadDatesWithActiveTasks() {
         viewModelScope.launch(Dispatchers.Default) {
-            val dates = db.getDatesWithActiveTasks()
-            _datesWithActiveTasks.value = dates
+            val counts = db.getTaskCountsPerDate()
+            _taskCountsPerDate.value = counts
+            _datesWithActiveTasks.value = counts.keys
         }
     }
 
