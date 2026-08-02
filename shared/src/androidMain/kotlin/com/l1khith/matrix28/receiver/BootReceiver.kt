@@ -12,6 +12,7 @@ import com.l1khith.matrix28.utils.scheduleTaskAlarm
 class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
+        AppContext.init(context)
         val action = intent.action ?: return
         val isBootOrTimeChange = action == Intent.ACTION_BOOT_COMPLETED ||
             action == Intent.ACTION_TIME_CHANGED ||
@@ -29,7 +30,7 @@ class BootReceiver : BroadcastReceiver() {
             }
 
             if (isBootOrTimeChange) {
-                val tasks = db.getTasksForDate(currentDateStr)
+                val tasks = db.getAllTasks()
                 for (task in tasks) {
                     if (task.reminder && !task.completed && task.utcTimestamp != null && task.utcTimestamp > currentTimeMillis()) {
                         scheduleTaskAlarm(task)

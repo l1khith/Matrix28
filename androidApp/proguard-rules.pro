@@ -1,27 +1,22 @@
-# Production ProGuard / R8 Rules for Matrix28
+# Optimized Production ProGuard / R8 Rules for Matrix28
 
-# Keep Compose classes
--keep class androidx.compose.** { *; }
--keepclassmembers class * extends androidx.compose.ui.node.Owner { *; }
--dontwarn androidx.compose.**
-
-# Keep Data Models & Schemas
+# Keep Data Models & Serialized Objects
 -keep class com.l1khith.matrix28.data.** { *; }
 -keepclassmembers class com.l1khith.matrix28.data.** { *; }
 
-# Keep Receivers & Entry Points
+# Keep Receivers & Main Activity Entry Point
 -keep class com.l1khith.matrix28.receiver.** { *; }
--keep class com.l1khith.matrix28.utils.** { *; }
 -keep class com.l1khith.matrix28.MainActivity { *; }
 
-# Keep SQLite & System Services
--keep class android.database.sqlite.** { *; }
+# Don't warn for Compose or Kotlin internal metadata
+-dontwarn androidx.compose.**
+-dontwarn kotlin.**
 
-# Keep Attributes for Reflection & Debugging
+# Keep Attributes for Stack Traces
 -keepattributes SourceFile,LineNumberTable
--keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
+-keepattributes *Annotation*,Signature
 
-# Optimization Settings
+# R8 Optimization & Code Shrinking Passes
 -optimizationpasses 5
 -repackageclasses ''
 -allowaccessmodification

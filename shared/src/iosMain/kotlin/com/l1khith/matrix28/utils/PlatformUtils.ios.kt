@@ -1,15 +1,10 @@
 package com.l1khith.matrix28.utils
 
 import androidx.compose.runtime.Composable
-import com.l1khith.matrix28.ui.TimePickerDialog
-import java.awt.Toolkit
-import java.awt.datatransfer.StringSelection
+import platform.UIKit.UIPasteboard
 
 actual fun copyToClipboard(text: String) {
-    try {
-        val selection = StringSelection(text)
-        Toolkit.getDefaultToolkit().systemClipboard.setContents(selection, selection)
-    } catch (_: Exception) {}
+    UIPasteboard.generalPasteboard.string = text
 }
 
 @Composable
@@ -21,6 +16,7 @@ actual fun PlatformTimePicker(
 ) {
     if (show) {
         TimePickerDialog(
+            show = true,
             initialTime = initialTime,
             onDismiss = onDismiss,
             onTimeSelected = onTimeSelected

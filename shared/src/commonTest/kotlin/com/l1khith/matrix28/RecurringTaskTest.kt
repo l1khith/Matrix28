@@ -7,9 +7,7 @@ import com.l1khith.matrix28.utils.CalendarSyncHelper
 import com.l1khith.matrix28.utils.FixedCalendarHelper
 import com.l1khith.matrix28.utils.FixedDate
 import com.l1khith.matrix28.viewmodel.FixedCalendarViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -80,7 +78,7 @@ class RecurringTaskTest {
     }
 
     @Test
-    fun testRecurringTaskEngine() = runBlocking {
+    fun testRecurringTaskEngine() = runTest {
         val vm = FixedCalendarViewModel()
         vm.selectDate(FixedDate(2026, 7, 13))
 
@@ -97,15 +95,23 @@ class RecurringTaskTest {
             endDate = null
         )
 
-        // Wait for coroutine completion
-        withContext(Dispatchers.Default) {
-            kotlinx.coroutines.delay(100)
+        // Wait for coroutine completion across platforms
+        var attempts = 0
+        while (vm.recurringTasks.value.isEmpty() && attempts < 40) {
+            kotlinx.coroutines.delay(50)
+            attempts++
         }
 
         val recurringList = vm.recurringTasks.value
         assertTrue(recurringList.any { it.id == "rec_daily" && it.title == "Morning Exercise" })
 
         // Check that a generated instance appears in tasks for selected day
+        attempts = 0
+        while (vm.tasksForSelectedDay.value.none { it.recurringParentId == "rec_daily" } && attempts < 40) {
+            kotlinx.coroutines.delay(50)
+            attempts++
+        }
+
         val dayTasks = vm.tasksForSelectedDay.value
         val generated = dayTasks.firstOrNull { it.recurringParentId == "rec_daily" }
         assertNotNull(generated)
@@ -116,8 +122,10 @@ class RecurringTaskTest {
         val recTemplate = recurringList.first { it.id == "rec_daily" }
         vm.toggleRecurringTaskActive(recTemplate)
 
-        withContext(Dispatchers.Default) {
-            kotlinx.coroutines.delay(100)
+        attempts = 0
+        while (vm.tasksForSelectedDay.value.any { it.recurringParentId == "rec_daily" } && attempts < 40) {
+            kotlinx.coroutines.delay(50)
+            attempts++
         }
 
         // Verify template is inactive and generated incomplete task is removed

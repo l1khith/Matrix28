@@ -17,7 +17,7 @@ data class RecurringTask(
     val recurrenceInterval: Int = 1,
     val priority: Int = 1,
     val isActive: Boolean = true,
-    val createdAt: Long = 0L,
+    val createdAt: Long,
     val endDate: String? = null,
     val reminderTime: String? = null
 )

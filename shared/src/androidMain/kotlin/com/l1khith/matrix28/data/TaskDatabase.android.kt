@@ -6,11 +6,12 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
 object AppContext {
+    @Volatile
     private var context: Context? = null
     fun init(ctx: Context) {
         context = ctx.applicationContext
     }
-    fun get(): Context = context ?: throw IllegalStateException("AppContext not initialized")
+    fun get(): Context = context ?: throw IllegalStateException("AppContext not initialized. Call AppContext.init(context) in Application or MainActivity.")
 }
 
 actual class TaskDatabase actual constructor() {
@@ -104,7 +105,21 @@ actual class TaskDatabase actual constructor() {
     }
 
     actual fun updateTask(task: AppTask): Boolean {
-        return insertTask(task)
+        val db = helper.writableDatabase
+        val values = ContentValues().apply {
+            put(COLUMN_TITLE, task.title)
+            put(COLUMN_DESCRIPTION, task.description)
+            put(COLUMN_ASSOCIATED_DATE, task.associatedDate)
+            put(COLUMN_IS_REMINDER, task.isReminder)
+            put(COLUMN_REMINDER_TIME, task.reminderTime)
+            put(COLUMN_UTC_TIMESTAMP, task.utcTimestamp)
+            put(COLUMN_IS_COMPLETED, task.isCompleted)
+            put(COLUMN_PRIORITY, task.priority)
+            put(COLUMN_RECURRING_PARENT_ID, task.recurringParentId)
+            put(COLUMN_IS_GENERATED, task.isGenerated)
+        }
+        val result = db.update(TABLE_TASKS, values, "$COLUMN_ID = ?", arrayOf(task.id))
+        return result > 0
     }
 
     actual fun deleteTask(id: String): Boolean {

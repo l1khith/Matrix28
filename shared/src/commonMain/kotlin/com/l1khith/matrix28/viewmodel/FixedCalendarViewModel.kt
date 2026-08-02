@@ -266,6 +266,7 @@ class FixedCalendarViewModel : ViewModel() {
     fun checkAndRunRollover() {
         val currentDateStr = FixedCalendarHelper.fromTimestamp(currentTimeMillis()).toString()
         db.catchUpRollover(currentDateStr)
+        generateRecurringInstancesForDate(currentDateStr)
     }
 
     // --- Sync & ICS Actions ---

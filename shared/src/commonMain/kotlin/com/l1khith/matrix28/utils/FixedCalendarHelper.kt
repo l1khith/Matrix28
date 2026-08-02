@@ -1,6 +1,7 @@
 package com.l1khith.matrix28.utils
 
 expect fun currentTimeMillis(): Long
+expect fun getTimeZoneOffset(timestampMs: Long): Long
 
 data class FixedDate(
     val year: Int,
@@ -96,24 +97,38 @@ object FixedCalendarHelper {
         }
     }
 
+    private fun floorDiv(a: Long, b: Long): Int {
+        val res = a / b
+        val rem = a % b
+        return (if (rem != 0L && ((a < 0) xor (b < 0))) res - 1 else res).toInt()
+    }
+
     /**
-     * Maps a UTC timestamp (milliseconds since epoch) to local FixedDate
+     * Maps a UTC timestamp (milliseconds since epoch) to local FixedDate using local timezone offset
      */
     fun fromTimestamp(timestampMs: Long): FixedDate {
-        // Approximate calculation based on epoch milliseconds: 86400000 ms per day
-        // 1970-01-01 was epoch (Day 1 of 1970).
-        val totalDays = (timestampMs / 86400000L).toInt()
+        val offset = getTimeZoneOffset(timestampMs)
+        val localMs = timestampMs + offset
+        val totalDays = floorDiv(localMs, 86400000L)
         
         var year = 1970
         var remainingDays = totalDays
         
-        while (true) {
-            val daysInYear = if (isLeapYear(year)) 366 else 365
-            if (remainingDays < daysInYear) {
-                break
+        if (remainingDays >= 0) {
+            while (true) {
+                val daysInYear = if (isLeapYear(year)) 366 else 365
+                if (remainingDays < daysInYear) {
+                    break
+                }
+                remainingDays -= daysInYear
+                year++
             }
-            remainingDays -= daysInYear
-            year++
+        } else {
+            while (remainingDays < 0) {
+                year--
+                val daysInYear = if (isLeapYear(year)) 366 else 365
+                remainingDays += daysInYear
+            }
         }
         
         val dayOfYear = remainingDays + 1
@@ -126,19 +141,28 @@ object FixedCalendarHelper {
     fun toTimestamp(fixedDate: FixedDate, timeStr: String? = null): Long {
         val dayOfYear = toDayOfYear(fixedDate)
         var daysCount = 0L
-        for (y in 1970 until fixedDate.year) {
-            daysCount += if (isLeapYear(y)) 366 else 365
+        if (fixedDate.year >= 1970) {
+            for (y in 1970 until fixedDate.year) {
+                daysCount += if (isLeapYear(y)) 366 else 365
+            }
+        } else {
+            for (y in fixedDate.year until 1970) {
+                daysCount -= if (isLeapYear(y)) 366 else 365
+            }
         }
         daysCount += (dayOfYear - 1)
         
-        var ms = daysCount * 86400000L
+        var localMs = daysCount * 86400000L
         if (timeStr != null && timeStr.contains(":")) {
             val parts = timeStr.split(":")
             val h = parts.getOrNull(0)?.toIntOrNull() ?: 0
             val m = parts.getOrNull(1)?.toIntOrNull() ?: 0
-            ms += (h * 3600 + m * 60) * 1000L
+            localMs += (h * 3600 + m * 60) * 1000L
         }
-        return ms
+        
+        val approxUtc = localMs - getTimeZoneOffset(localMs)
+        val offset = getTimeZoneOffset(approxUtc)
+        return localMs - offset
     }
 
     /**

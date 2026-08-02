@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -9,17 +8,21 @@ plugins {
 }
 
 kotlin {
-    jvm()
-    
-    js {
-        browser()
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
     }
-    
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        browser()
+
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "Shared"
+            isStatic = true
+        }
     }
-    
+
     android {
        namespace = "com.l1khith.matrix28.shared"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -49,9 +52,9 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
+            implementation(libs.compose.material)
             implementation(libs.compose.material3)
-            implementation(compose.material)
-            implementation(compose.materialIconsExtended)
+            implementation(libs.compose.materialIconsCore)
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
@@ -60,9 +63,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
-        }
-        jsMain.dependencies {
-            implementation(libs.wrappers.browser)
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }

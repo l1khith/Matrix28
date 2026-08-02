@@ -44,7 +44,7 @@ actual fun scheduleTaskAlarm(task: AppTask) {
                 pendingIntent
             )
         } else {
-            alarmManager.set(
+            alarmManager.setAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
                 task.utcTimestamp,
                 pendingIntent
@@ -108,7 +108,7 @@ actual fun scheduleMidnightRollover() {
                 pendingIntent
             )
         } else {
-            alarmManager.set(
+            alarmManager.setAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
                 triggerTime,
                 pendingIntent
