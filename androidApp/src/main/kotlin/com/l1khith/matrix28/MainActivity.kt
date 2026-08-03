@@ -8,6 +8,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -16,28 +19,29 @@ class MainActivity : ComponentActivity() {
     ) { _ -> }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        com.l1khith.matrix28.data.AppContext.init(applicationContext)
-        com.google.android.gms.ads.MobileAds.initialize(this)
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        // Offload AdMob initialization to IO thread (Bug #20)
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                com.google.android.gms.ads.MobileAds.initialize(this@MainActivity)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        enableEdgeToEdge()
+
+        val selectedTaskId = intent?.getStringExtra("selected_task_id")
 
         setContent {
             App()
         }
 
-        requestAppPermissions()
-    }
-
-    private fun requestAppPermissions() {
-        val permissions = mutableListOf<String>()
-
+        // Only request notification permission on startup if required (API 33+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissions.add(android.Manifest.permission.POST_NOTIFICATIONS)
+            requestPermissionsLauncher.launch(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS))
         }
-
-        permissions.add(android.Manifest.permission.READ_CALENDAR)
-
-        requestPermissionsLauncher.launch(permissions.toTypedArray())
     }
 }
 

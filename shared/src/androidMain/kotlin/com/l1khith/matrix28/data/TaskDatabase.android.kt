@@ -11,7 +11,19 @@ object AppContext {
     fun init(ctx: Context) {
         context = ctx.applicationContext
     }
-    fun get(): Context = context ?: throw IllegalStateException("AppContext not initialized. Call AppContext.init(context) in Application or MainActivity.")
+    fun get(): Context {
+        val current = context
+        if (current != null) return current
+        return try {
+            val providerClass = Class.forName("androidx.test.core.app.ApplicationProvider")
+            val method = providerClass.getMethod("getApplicationContext")
+            val testCtx = method.invoke(null) as Context
+            context = testCtx
+            testCtx
+        } catch (_: Throwable) {
+            throw IllegalStateException("AppContext not initialized. Call AppContext.init(context) in Application or MainActivity.")
+        }
+    }
 }
 
 actual class TaskDatabase actual constructor() {
@@ -264,27 +276,35 @@ actual class TaskDatabase actual constructor() {
 
     actual fun catchUpRollover(currDate: String): Int {
         val db = helper.writableDatabase
-        // Delete all past uncompleted generated recurring instances so routines never pile up on today
-        db.delete(TABLE_TASKS, "$COLUMN_ASSOCIATED_DATE < ? AND $COLUMN_IS_GENERATED = 1 AND $COLUMN_IS_COMPLETED = 0", arrayOf(currDate))
-        // Purge any existing duplicate generated tasks for the same associated_date and recurring_parent_id
-        db.execSQL("""
-            DELETE FROM $TABLE_TASKS 
-            WHERE $COLUMN_IS_GENERATED = 1 AND rowid NOT IN (
-                SELECT MIN(rowid) 
-                FROM $TABLE_TASKS 
-                WHERE $COLUMN_IS_GENERATED = 1 
-                GROUP BY $COLUMN_ASSOCIATED_DATE, $COLUMN_RECURRING_PARENT_ID
+        db.beginTransaction()
+        var updatedRows = 0
+        try {
+            // Delete all past uncompleted generated recurring instances so routines never pile up on today
+            db.delete(TABLE_TASKS, "$COLUMN_ASSOCIATED_DATE < ? AND $COLUMN_IS_GENERATED = 1 AND $COLUMN_IS_COMPLETED = 0", arrayOf(currDate))
+            // Purge any existing duplicate generated tasks for the same associated_date and recurring_parent_id (Bug #6)
+            db.execSQL("""
+                DELETE FROM $TABLE_TASKS 
+                WHERE $COLUMN_IS_GENERATED = 1 AND $COLUMN_RECURRING_PARENT_ID IS NOT NULL AND rowid NOT IN (
+                    SELECT MIN(rowid) 
+                    FROM $TABLE_TASKS 
+                    WHERE $COLUMN_IS_GENERATED = 1 AND $COLUMN_RECURRING_PARENT_ID IS NOT NULL
+                    GROUP BY $COLUMN_ASSOCIATED_DATE, $COLUMN_RECURRING_PARENT_ID
+                )
+            """.trimIndent())
+            // Roll over ONLY manual user-created single tasks
+            val values = ContentValues().apply {
+                put(COLUMN_ASSOCIATED_DATE, currDate)
+            }
+            updatedRows = db.update(
+                TABLE_TASKS, values,
+                "$COLUMN_ASSOCIATED_DATE < ? AND $COLUMN_IS_GENERATED = 0 AND $COLUMN_IS_COMPLETED = 0",
+                arrayOf(currDate)
             )
-        """.trimIndent())
-        // Roll over ONLY manual user-created single tasks
-        val values = ContentValues().apply {
-            put(COLUMN_ASSOCIATED_DATE, currDate)
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
         }
-        return db.update(
-            TABLE_TASKS, values,
-            "$COLUMN_ASSOCIATED_DATE < ? AND $COLUMN_IS_GENERATED = 0 AND $COLUMN_IS_COMPLETED = 0",
-            arrayOf(currDate)
-        )
+        return updatedRows
     }
 
     actual fun insertGeneratedTask(task: AppTask): Boolean {
@@ -331,11 +351,14 @@ actual class TaskDatabase actual constructor() {
             daysStr.split(",").mapNotNull { it.toIntOrNull() }
         }
 
+        val typeStr = c.getString(c.getColumnIndexOrThrow(COLUMN_REC_TYPE))
+        val recurrenceType = RecurrenceType.entries.find { it.name == typeStr } ?: RecurrenceType.DAILY
+
         return RecurringTask(
             id = c.getString(c.getColumnIndexOrThrow(COLUMN_REC_ID)),
             title = c.getString(c.getColumnIndexOrThrow(COLUMN_REC_TITLE)),
             description = c.getString(c.getColumnIndexOrThrow(COLUMN_REC_DESCRIPTION)),
-            recurrenceType = RecurrenceType.valueOf(c.getString(c.getColumnIndexOrThrow(COLUMN_REC_TYPE))),
+            recurrenceType = recurrenceType,
             recurrenceDays = daysList,
             recurrenceInterval = c.getInt(c.getColumnIndexOrThrow(COLUMN_REC_INTERVAL)),
             priority = c.getInt(c.getColumnIndexOrThrow(COLUMN_REC_PRIORITY)),

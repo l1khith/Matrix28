@@ -8,34 +8,49 @@ import com.l1khith.matrix28.data.TaskDatabase
 import com.l1khith.matrix28.utils.FixedCalendarHelper
 import com.l1khith.matrix28.utils.currentTimeMillis
 import com.l1khith.matrix28.utils.scheduleTaskAlarm
+import kotlin.concurrent.thread
 
 class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        AppContext.init(context)
-        val action = intent.action ?: return
-        val isBootOrTimeChange = action == Intent.ACTION_BOOT_COMPLETED ||
-            action == Intent.ACTION_TIME_CHANGED ||
-            action == Intent.ACTION_TIMEZONE_CHANGED
+        val pendingResult = goAsync()
+        thread {
+            try {
+                AppContext.init(context)
+                val action = intent.action ?: return@thread
 
-        val isMidnightRollover = action == "com.l1khith.matrix28.ACTION_MIDNIGHT_ROLLOVER"
+                // Validate package scope if intent is custom action (Bug #24)
+                val isMidnightRollover = action == "com.l1khith.matrix28.ACTION_MIDNIGHT_ROLLOVER"
+                if (isMidnightRollover && intent.`package` != context.packageName) {
+                    return@thread
+                }
 
-        if (isBootOrTimeChange || isMidnightRollover) {
-            val db = TaskDatabase()
-            val currentDateStr = FixedCalendarHelper.fromTimestamp(currentTimeMillis()).toString()
-            db.catchUpRollover(currentDateStr)
+                val isBootOrTimeChange = action == Intent.ACTION_BOOT_COMPLETED ||
+                    action == Intent.ACTION_TIME_CHANGED ||
+                    action == Intent.ACTION_TIMEZONE_CHANGED
 
-            if (isMidnightRollover || action == Intent.ACTION_BOOT_COMPLETED) {
-                com.l1khith.matrix28.utils.scheduleMidnightRollover()
-            }
+                if (isBootOrTimeChange || isMidnightRollover) {
+                    val db = TaskDatabase()
+                    val currentDateStr = FixedCalendarHelper.fromTimestamp(currentTimeMillis()).toString()
+                    db.catchUpRollover(currentDateStr)
 
-            if (isBootOrTimeChange) {
-                val tasks = db.getAllTasks()
-                for (task in tasks) {
-                    if (task.reminder && !task.completed && task.utcTimestamp != null && task.utcTimestamp > currentTimeMillis()) {
-                        scheduleTaskAlarm(task)
+                    if (isMidnightRollover || action == Intent.ACTION_BOOT_COMPLETED) {
+                        com.l1khith.matrix28.utils.scheduleMidnightRollover()
+                    }
+
+                    if (isBootOrTimeChange) {
+                        val tasks = db.getAllTasks()
+                        for (task in tasks) {
+                            if (task.reminder && !task.completed && task.utcTimestamp != null && task.utcTimestamp > currentTimeMillis()) {
+                                scheduleTaskAlarm(task)
+                            }
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                pendingResult.finish()
             }
         }
     }

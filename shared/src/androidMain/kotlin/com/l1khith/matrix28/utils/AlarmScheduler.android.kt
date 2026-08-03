@@ -5,11 +5,14 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import com.l1khith.matrix28.data.AppContext
 import com.l1khith.matrix28.data.AppTask
 import com.l1khith.matrix28.receiver.AlarmReceiver
 import com.l1khith.matrix28.receiver.BootReceiver
 import java.util.Calendar
+
+private const val TAG = "AlarmScheduler"
 
 actual fun scheduleTaskAlarm(task: AppTask) {
     if (task.isReminder != 1 || task.utcTimestamp == null || task.isCompleted == 1) return
@@ -24,9 +27,10 @@ actual fun scheduleTaskAlarm(task: AppTask) {
             putExtra("task_desc", task.description ?: "")
         }
 
+        val notificationId = task.id.hashCode() and 0x7FFFFFFF
         val pendingIntent = PendingIntent.getBroadcast(
             context,
-            task.id.hashCode(),
+            notificationId,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -38,11 +42,8 @@ actual fun scheduleTaskAlarm(task: AppTask) {
         }
 
         if (canScheduleExact) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                task.utcTimestamp,
-                pendingIntent
-            )
+            val alarmClockInfo = AlarmManager.AlarmClockInfo(task.utcTimestamp, pendingIntent)
+            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
         } else {
             alarmManager.setAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
@@ -50,7 +51,9 @@ actual fun scheduleTaskAlarm(task: AppTask) {
                 pendingIntent
             )
         }
-    } catch (_: Exception) {}
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to schedule alarm for task ${task.id}", e)
+    }
 }
 
 actual fun cancelTaskAlarm(task: AppTask) {
@@ -58,16 +61,19 @@ actual fun cancelTaskAlarm(task: AppTask) {
         val context = AppContext.get()
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, AlarmReceiver::class.java)
+        val notificationId = task.id.hashCode() and 0x7FFFFFFF
         val pendingIntent = PendingIntent.getBroadcast(
             context,
-            task.id.hashCode(),
+            notificationId,
             intent,
             PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
         )
         if (pendingIntent != null) {
             alarmManager.cancel(pendingIntent)
         }
-    } catch (_: Exception) {}
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to cancel alarm for task ${task.id}", e)
+    }
 }
 
 actual fun scheduleMidnightRollover() {
@@ -76,6 +82,7 @@ actual fun scheduleMidnightRollover() {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, BootReceiver::class.java).apply {
             action = "com.l1khith.matrix28.ACTION_MIDNIGHT_ROLLOVER"
+            setPackage(context.packageName) // Restrict to package (Bug #24)
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
@@ -114,5 +121,7 @@ actual fun scheduleMidnightRollover() {
                 pendingIntent
             )
         }
-    } catch (_: Exception) {}
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to schedule midnight rollover", e)
+    }
 }

@@ -32,6 +32,8 @@ import com.l1khith.matrix28.utils.FixedDate
 import com.l1khith.matrix28.utils.PlatformTimePicker
 import com.l1khith.matrix28.utils.currentTimeMillis
 import com.l1khith.matrix28.viewmodel.FixedCalendarViewModel
+import com.l1khith.matrix28.utils.rememberCalendarPermissionLauncher
+import com.l1khith.matrix28.utils.rememberNotificationPermissionLauncher
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +48,30 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
     var showRecurringManager by remember { mutableStateOf(false) }
     var showSyncDialog by remember { mutableStateOf(false) }
     var showIcsImportDialog by remember { mutableStateOf(false) }
+
+    var pendingCalendarImportAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var pendingNotificationSaveAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    val launchCalendarPermission = rememberCalendarPermissionLauncher(
+        onGranted = {
+            pendingCalendarImportAction?.invoke()
+            pendingCalendarImportAction = null
+        },
+        onDenied = {
+            pendingCalendarImportAction = null
+        }
+    )
+
+    val launchNotificationPermission = rememberNotificationPermissionLauncher(
+        onGranted = {
+            pendingNotificationSaveAction?.invoke()
+            pendingNotificationSaveAction = null
+        },
+        onDenied = {
+            pendingNotificationSaveAction?.invoke()
+            pendingNotificationSaveAction = null
+        }
+    )
 
     val todayFixed = remember { FixedCalendarHelper.fromTimestamp(currentTimeMillis()) }
 
@@ -62,12 +88,24 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = "13-Month Planner",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp,
-                        color = textColorPrimary
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Matrix28",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = primaryAccent
+                            )
+                        )
+                        Text(
+                            text = "28-Day Fixed Calendar",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = textColorSecondary
+                            )
+                        )
+                    }
                 },
                 actions = {
                     IconButton(onClick = { showSyncDialog = true }) {

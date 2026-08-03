@@ -6,6 +6,7 @@ import com.l1khith.matrix28.data.TaskDatabase
 import com.l1khith.matrix28.utils.CalendarSyncHelper
 import com.l1khith.matrix28.utils.FixedCalendarHelper
 import com.l1khith.matrix28.utils.FixedDate
+import com.l1khith.matrix28.utils.currentTimeMillis
 import com.l1khith.matrix28.viewmodel.FixedCalendarViewModel
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -14,6 +15,10 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+
+@RunWith(RobolectricTestRunner::class)
 class RecurringTaskTest {
 
     @Test
@@ -80,7 +85,8 @@ class RecurringTaskTest {
     @Test
     fun testRecurringTaskEngine() = runTest {
         val vm = FixedCalendarViewModel()
-        vm.selectDate(FixedDate(2026, 7, 13))
+        val today = FixedCalendarHelper.fromTimestamp(currentTimeMillis())
+        vm.selectDate(today)
 
         // Create a DAILY recurring task template
         vm.saveRecurringTask(
@@ -98,7 +104,8 @@ class RecurringTaskTest {
         // Wait for coroutine completion across platforms
         var attempts = 0
         while (vm.recurringTasks.value.isEmpty() && attempts < 40) {
-            kotlinx.coroutines.delay(50)
+            Thread.sleep(50)
+            org.robolectric.shadows.ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
             attempts++
         }
 
@@ -108,7 +115,8 @@ class RecurringTaskTest {
         // Check that a generated instance appears in tasks for selected day
         attempts = 0
         while (vm.tasksForSelectedDay.value.none { it.recurringParentId == "rec_daily" } && attempts < 40) {
-            kotlinx.coroutines.delay(50)
+            Thread.sleep(50)
+            org.robolectric.shadows.ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
             attempts++
         }
 
@@ -124,7 +132,8 @@ class RecurringTaskTest {
 
         attempts = 0
         while (vm.tasksForSelectedDay.value.any { it.recurringParentId == "rec_daily" } && attempts < 40) {
-            kotlinx.coroutines.delay(50)
+            Thread.sleep(50)
+            org.robolectric.shadows.ShadowLooper.runUiThreadTasksIncludingDelayedTasks()
             attempts++
         }
 

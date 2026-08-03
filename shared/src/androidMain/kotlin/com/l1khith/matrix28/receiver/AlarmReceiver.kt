@@ -41,25 +41,26 @@ class AlarmReceiver : BroadcastReceiver() {
             putExtra("selected_task_id", taskId)
         }
 
+        val notificationId = taskId.hashCode() and 0x7FFFFFFF
+
+        val builder = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setContentTitle(taskTitle)
+            .setContentText(taskDesc)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setAutoCancel(true)
+
         if (clickIntent != null) {
             val pendingIntent = PendingIntent.getActivity(
                 context,
-                taskId.hashCode(),
+                notificationId,
                 clickIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-
-            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-                .setContentTitle(taskTitle)
-                .setContentText(taskDesc)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setCategory(NotificationCompat.CATEGORY_REMINDER)
-                .setAutoCancel(true)
-                .setContentIntent(pendingIntent)
-                .build()
-
-            notificationManager.notify(taskId.hashCode(), notification)
+            builder.setContentIntent(pendingIntent)
         }
+
+        notificationManager.notify(notificationId, builder.build())
     }
 }

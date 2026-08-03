@@ -13,6 +13,7 @@ import com.l1khith.matrix28.utils.FixedDate
 import com.l1khith.matrix28.utils.currentTimeMillis
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -40,43 +41,55 @@ class FixedCalendarViewModel : ViewModel() {
     val recurringTasks: State<List<RecurringTask>> = _recurringTasks
 
     init {
-        checkAndRunRollover()
-        importSystemCalendar()
-        loadState()
+        val currentSelDate = _selectedDate.value
+        viewModelScope.launch(Dispatchers.Default) {
+            checkAndRunRollover(currentSelDate)
+            val systemEvents = com.l1khith.matrix28.utils.importSystemCalendarEvents()
+            for (task in systemEvents) {
+                db.insertTask(task)
+            }
+            loadState(currentSelDate)
+        }
     }
 
     fun selectDate(fixedDate: FixedDate) {
         _selectedDate.value = fixedDate
-        loadTasksForSelectedDay()
+        loadTasksForSelectedDay(fixedDate)
     }
 
-    fun loadState() {
-        loadTasksForSelectedDay()
+    fun loadState(fixedDate: FixedDate = _selectedDate.value) {
+        loadTasksForSelectedDay(fixedDate)
         loadDatesWithActiveTasks()
         loadRecurringTasks()
     }
 
-    private fun loadTasksForSelectedDay() {
+    private fun loadTasksForSelectedDay(fixedDate: FixedDate = _selectedDate.value) {
+        val dateStr = fixedDate.toString()
         viewModelScope.launch(Dispatchers.Default) {
-            val dateStr = _selectedDate.value.toString()
             generateRecurringInstancesForDate(dateStr)
             val tasks = db.getTasksForDate(dateStr)
-            _tasksForSelectedDay.value = tasks
+            withContext(Dispatchers.Main.immediate) {
+                _tasksForSelectedDay.value = tasks
+            }
         }
     }
 
     fun loadDatesWithActiveTasks() {
         viewModelScope.launch(Dispatchers.Default) {
             val counts = db.getTaskCountsPerDate()
-            _taskCountsPerDate.value = counts
-            _datesWithActiveTasks.value = counts.keys
+            withContext(Dispatchers.Main.immediate) {
+                _taskCountsPerDate.value = counts
+                _datesWithActiveTasks.value = counts.keys
+            }
         }
     }
 
     fun loadRecurringTasks() {
         viewModelScope.launch(Dispatchers.Default) {
             val list = db.getAllRecurringTasks()
-            _recurringTasks.value = list
+            withContext(Dispatchers.Main.immediate) {
+                _recurringTasks.value = list
+            }
         }
     }
 
@@ -88,8 +101,8 @@ class FixedCalendarViewModel : ViewModel() {
         reminderTime: String?,
         priority: Int
     ) {
+        val targetDate = _selectedDate.value
         viewModelScope.launch(Dispatchers.Default) {
-            val targetDate = _selectedDate.value
             val isRem = if (isReminder) 1 else 0
 
             val utcTimestamp = if (isReminder && !reminderTime.isNullOrEmpty()) {
@@ -123,19 +136,21 @@ class FixedCalendarViewModel : ViewModel() {
                 com.l1khith.matrix28.utils.scheduleTaskAlarm(task)
             }
 
-            loadState()
+            loadState(targetDate)
         }
     }
 
     fun deleteTask(task: AppTask) {
+        val targetDate = _selectedDate.value
         viewModelScope.launch(Dispatchers.Default) {
             com.l1khith.matrix28.utils.cancelTaskAlarm(task)
             db.deleteTask(task.id)
-            loadState()
+            loadState(targetDate)
         }
     }
 
     fun toggleTaskCompletion(task: AppTask) {
+        val targetDate = _selectedDate.value
         viewModelScope.launch(Dispatchers.Default) {
             val updatedTask = task.copy(isCompleted = if (task.completed) 0 else 1)
             db.updateTask(updatedTask)
@@ -146,7 +161,7 @@ class FixedCalendarViewModel : ViewModel() {
                 com.l1khith.matrix28.utils.scheduleTaskAlarm(updatedTask)
             }
 
-            loadState()
+            loadState(targetDate)
         }
     }
 
@@ -164,6 +179,8 @@ class FixedCalendarViewModel : ViewModel() {
         endDate: String?,
         reminderTime: String? = null
     ) {
+        val targetDateStr = _selectedDate.value.toString()
+        val targetDate = _selectedDate.value
         viewModelScope.launch(Dispatchers.Default) {
             val task = RecurringTask(
                 id = id ?: Uuid.random().toString(),
@@ -180,20 +197,23 @@ class FixedCalendarViewModel : ViewModel() {
             )
             val success = db.insertRecurringTask(task)
             if (success) {
-                generateRecurringInstancesForDate(_selectedDate.value.toString())
+                generateRecurringInstancesForDate(targetDateStr)
             }
-            loadState()
+            loadState(targetDate)
         }
     }
 
     fun deleteRecurringTask(id: String) {
+        val targetDate = _selectedDate.value
         viewModelScope.launch(Dispatchers.Default) {
             db.deleteRecurringTask(id)
-            loadState()
+            loadState(targetDate)
         }
     }
 
     fun toggleRecurringTaskActive(task: RecurringTask) {
+        val targetDateStr = _selectedDate.value.toString()
+        val targetDate = _selectedDate.value
         viewModelScope.launch(Dispatchers.Default) {
             val updated = task.copy(isActive = !task.isActive)
             db.insertRecurringTask(updated)
@@ -201,10 +221,10 @@ class FixedCalendarViewModel : ViewModel() {
             if (!updated.isActive) {
                 db.deleteIncompleteGeneratedTasks(updated.id)
             } else {
-                generateRecurringInstancesForDate(_selectedDate.value.toString())
+                generateRecurringInstancesForDate(targetDateStr)
             }
 
-            loadState()
+            loadState(targetDate)
         }
     }
 
@@ -271,10 +291,10 @@ class FixedCalendarViewModel : ViewModel() {
         }
     }
 
-    fun checkAndRunRollover() {
+    fun checkAndRunRollover(targetDate: FixedDate = _selectedDate.value) {
         val currentDateStr = FixedCalendarHelper.fromTimestamp(currentTimeMillis()).toString()
         db.catchUpRollover(currentDateStr)
-        generateRecurringInstancesForMonth(_selectedDate.value.year, _selectedDate.value.month)
+        generateRecurringInstancesForMonth(targetDate.year, targetDate.month)
     }
 
     fun generateRecurringInstancesForMonth(year: Int, month: Int) {
@@ -289,12 +309,13 @@ class FixedCalendarViewModel : ViewModel() {
     // --- Sync & ICS Actions ---
 
     fun importSystemCalendar() {
+        val targetDate = _selectedDate.value
         viewModelScope.launch(Dispatchers.Default) {
             val systemEvents = com.l1khith.matrix28.utils.importSystemCalendarEvents()
             for (task in systemEvents) {
                 db.insertTask(task)
             }
-            loadState()
+            loadState(targetDate)
         }
     }
 
@@ -304,12 +325,13 @@ class FixedCalendarViewModel : ViewModel() {
     }
 
     fun importFromIcsContent(icsContent: String) {
+        val targetDate = _selectedDate.value
         viewModelScope.launch(Dispatchers.Default) {
             val tasks = com.l1khith.matrix28.utils.CalendarSyncHelper.importFromIcs(icsContent)
             for (task in tasks) {
                 db.insertTask(task)
             }
-            loadState()
+            loadState(targetDate)
         }
     }
 }

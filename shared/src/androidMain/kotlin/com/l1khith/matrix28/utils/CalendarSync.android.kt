@@ -60,7 +60,7 @@ actual fun importSystemCalendarEvents(): List<AppTask> {
                 val fixedDate = FixedCalendarHelper.fromTimestamp(startMillis)
                 val associatedDate = fixedDate.toString()
 
-                val isReminder = if (isAllDay) 0 else 1
+                val isReminder = 0
                 val reminderTime = if (isAllDay) {
                     null
                 } else {
@@ -78,7 +78,7 @@ actual fun importSystemCalendarEvents(): List<AppTask> {
                         associatedDate = associatedDate,
                         isReminder = isReminder,
                         reminderTime = reminderTime,
-                        utcTimestamp = if (isReminder == 1) startMillis else null,
+                        utcTimestamp = null,
                         isCompleted = 0,
                         priority = 1
                     )

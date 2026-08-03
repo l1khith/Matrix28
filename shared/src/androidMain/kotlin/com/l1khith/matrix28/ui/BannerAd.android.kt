@@ -12,12 +12,13 @@ import com.google.android.gms.ads.AdView
 
 @Composable
 actual fun BannerAd(modifier: Modifier) {
+    val configuredAdUnitId = System.getProperty("ADMOB_BANNER_UNIT_ID") ?: "ca-app-pub-3940256099942544/6300978111"
     AndroidView(
         modifier = modifier.fillMaxWidth().height(50.dp),
         factory = { context ->
             AdView(context).apply {
                 setAdSize(AdSize.BANNER)
-                adUnitId = "ca-app-pub-3940256099942544/6300978111"
+                adUnitId = configuredAdUnitId
                 loadAd(AdRequest.Builder().build())
             }
         }

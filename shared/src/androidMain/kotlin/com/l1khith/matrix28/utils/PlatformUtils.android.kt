@@ -31,7 +31,7 @@ actual fun PlatformTimePicker(
     val hour = parts.getOrNull(0)?.toIntOrNull() ?: 12
     val min = parts.getOrNull(1)?.toIntOrNull() ?: 0
 
-    DisposableEffect(Unit) {
+    DisposableEffect(show) {
         val dialog = TimePickerDialog(
             context,
             { _, h, m ->
