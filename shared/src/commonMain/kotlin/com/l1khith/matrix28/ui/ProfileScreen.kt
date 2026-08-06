@@ -16,25 +16,41 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.l1khith.matrix28.billing.SubscriptionManager
+import com.l1khith.matrix28.ui.theme.AppIcons
+import com.l1khith.matrix28.ui.theme.AppTheme
 import com.l1khith.matrix28.ui.theme.MatrixColors
 import com.l1khith.matrix28.ui.theme.MatrixShapes
-import com.l1khith.matrix28.utils.FixedCalendarHelper
-import com.l1khith.matrix28.utils.currentTimeMillis
+import com.l1khith.matrix28.ui.theme.ThemeManager
 
 @Composable
 fun ProfileScreen(
     onOpenSubscription: () -> Unit,
     onOpenCustomerCenter: () -> Unit,
-    onOpenSettings: () -> Unit,
+    onOpenSecurity: () -> Unit = {},
+    onOpenNotifications: () -> Unit = {},
     onOpenMonthView: () -> Unit
 ) {
-    val todayFixed = remember { FixedCalendarHelper.fromTimestamp(currentTimeMillis()) }
-    val cycleDay = todayFixed.day
-    val cycleMonth = todayFixed.month
-    val progressPercent = remember(cycleDay) { ((cycleDay / 28f) * 100).toInt() }
+    val isProActive by SubscriptionManager.isProActive.collectAsState()
+    val currentTheme by ThemeManager.currentTheme.collectAsState()
+    var showThemeDialog by remember { mutableStateOf(false) }
+
+    if (showThemeDialog) {
+        ThemeSelectionDialog(
+            isProActive = isProActive,
+            currentTheme = currentTheme,
+            onDismiss = { showThemeDialog = false },
+            onSelectTheme = { theme ->
+                ThemeManager.setTheme(theme)
+                showThemeDialog = false
+            },
+            onOpenPaywall = onOpenSubscription
+        )
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -44,7 +60,7 @@ fun ProfileScreen(
         contentPadding = PaddingValues(bottom = 80.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // User Header Section
+        // User Header Section (Guest)
         item {
             Column(
                 modifier = Modifier
@@ -66,7 +82,7 @@ fun ProfileScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Person,
-                            contentDescription = "User Avatar",
+                            contentDescription = "Guest Avatar",
                             tint = MatrixColors.Primary,
                             modifier = Modifier.size(48.dp)
                         )
@@ -91,147 +107,15 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "Power User",
+                    text = "Guest",
                     color = MatrixColors.TextHeader,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp
                 )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = "Cycle",
-                        tint = MatrixColors.Primary,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "CYCLE $cycleMonth / DAY $cycleDay",
-                        color = MatrixColors.TextSecondary,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
-                }
             }
         }
 
-        // Section 1: Performance Overview
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "PERFORMANCE OVERVIEW",
-                    color = MatrixColors.TextSecondary,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp,
-                    modifier = Modifier.padding(horizontal = 4.dp)
-                )
-
-                // Cycle 14 Overview Card
-                Card(
-                    shape = MatrixShapes.Lg,
-                    colors = CardDefaults.cardColors(containerColor = MatrixColors.SurfaceContainerLow),
-                    border = BorderStroke(1.dp, MatrixColors.OutlineVariant),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Cycle $cycleMonth Overview",
-                            color = MatrixColors.TextHeader,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 16.sp,
-                            modifier = Modifier.align(Alignment.Start)
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Box(
-                            modifier = Modifier.size(140.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                progress = { cycleDay / 28f },
-                                modifier = Modifier.fillMaxSize(),
-                                color = MatrixColors.Primary,
-                                strokeWidth = 8.dp,
-                                trackColor = MatrixColors.OutlineVariant
-                            )
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = "$progressPercent%",
-                                    color = MatrixColors.Primary,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 28.sp
-                                )
-                                Text(
-                                    text = "Day $cycleDay of 28",
-                                    color = MatrixColors.TextSecondary,
-                                    fontSize = 12.sp
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Efficiency Score Card
-                Card(
-                    shape = MatrixShapes.Lg,
-                    colors = CardDefaults.cardColors(containerColor = MatrixColors.SurfaceContainerLow),
-                    border = BorderStroke(1.dp, MatrixColors.OutlineVariant),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .padding(20.dp)
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "Efficiency Score",
-                                color = MatrixColors.TextSecondary,
-                                fontSize = 13.sp
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "88",
-                                color = MatrixColors.TextHeader,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 32.sp
-                            )
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(CircleShape)
-                                .background(MatrixColors.SurfaceContainer)
-                                .border(1.dp, MatrixColors.OutlineVariant, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowUp,
-                                contentDescription = "Efficiency",
-                                tint = MatrixColors.Primary,
-                                modifier = Modifier.size(28.dp)
-                            )
-
-                        }
-                    }
-                }
-            }
-        }
-
-        // Section 2: Account Settings
+        // Section: Account Settings
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
@@ -250,34 +134,35 @@ fun ProfileScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column {
-                        ProfileSettingRow(
-                            icon = Icons.Default.Star,
+                        ProfileValueRow(
+                            icon = AppIcons.Subscription,
                             title = "Subscription",
+                            value = if (isProActive) "Pro" else "Free",
                             onClick = onOpenSubscription
                         )
 
                         HorizontalDivider(color = MatrixColors.OutlineVariant, thickness = 1.dp)
                         ProfileSettingRow(
-                            icon = Icons.Default.Lock,
+                            icon = AppIcons.Security,
                             title = "Security",
-                            onClick = onOpenCustomerCenter
+                            onClick = onOpenSecurity
                         )
                         HorizontalDivider(color = MatrixColors.OutlineVariant, thickness = 1.dp)
                         ProfileSettingRow(
-                            icon = Icons.Default.Notifications,
+                            icon = AppIcons.Notification,
                             title = "Notifications",
-                            onClick = onOpenSettings
+                            onClick = onOpenNotifications
                         )
                     }
                 }
             }
         }
 
-        // Section 3: Calendar Preferences
+        // Section: APPEARANCE
         item {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    text = "CALENDAR PREFERENCES",
+                    text = "APPEARANCE",
                     color = MatrixColors.TextSecondary,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
@@ -293,89 +178,12 @@ fun ProfileScreen(
                 ) {
                     Column {
                         ProfileValueRow(
-                            icon = Icons.Default.DateRange,
-                            title = "Cycle Start Date",
-                            value = "Sunday",
-                            onClick = onOpenSettings
-                        )
-                        HorizontalDivider(color = MatrixColors.OutlineVariant, thickness = 1.dp)
-                        ProfileValueRow(
-                            icon = Icons.Default.DateRange,
-                            title = "Reminder Times",
-                            value = "Default",
-                            onClick = onOpenSettings
+                            icon = AppIcons.Appearance,
+                            title = "Theme",
+                            value = currentTheme.themeName,
+                            onClick = { showThemeDialog = true }
                         )
                     }
-                }
-            }
-        }
-
-        // Section 4: Support & Legal
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "SUPPORT & LEGAL",
-                    color = MatrixColors.TextSecondary,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp,
-                    modifier = Modifier.padding(horizontal = 4.dp)
-                )
-
-                Card(
-                    shape = MatrixShapes.Lg,
-                    colors = CardDefaults.cardColors(containerColor = MatrixColors.SurfaceContainerLow),
-                    border = BorderStroke(1.dp, MatrixColors.OutlineVariant),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column {
-                        ProfileSettingRow(
-                            icon = Icons.Default.Info,
-                            title = "Help Center",
-                            onClick = {}
-                        )
-                        HorizontalDivider(color = MatrixColors.OutlineVariant, thickness = 1.dp)
-                        ProfileSettingRow(
-                            icon = Icons.Default.Info,
-                            title = "Privacy Policy",
-                            onClick = {}
-                        )
-                    }
-                }
-            }
-        }
-
-        // Section 5: Log Out Button
-        item {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { },
-                shape = MatrixShapes.Lg,
-                colors = CardDefaults.cardColors(containerColor = MatrixColors.SurfaceContainerLow),
-                border = BorderStroke(1.dp, MatrixColors.Error.copy(alpha = 0.3f))
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Lock,
-                        contentDescription = "Log Out",
-                        tint = MatrixColors.Error
-                    )
-
-
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Log Out",
-                        color = MatrixColors.Error,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
-                    )
                 }
             }
         }
@@ -383,8 +191,118 @@ fun ProfileScreen(
 }
 
 @Composable
+fun ThemeSelectionDialog(
+    isProActive: Boolean,
+    currentTheme: AppTheme,
+    onDismiss: () -> Unit,
+    onSelectTheme: (AppTheme) -> Unit,
+    onOpenPaywall: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select App Theme", color = MatrixColors.TextHeader, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                AppTheme.entries.forEach { theme ->
+                    val isSelected = theme == currentTheme
+                    val colors = ThemeManager.getColors(theme)
+                    Surface(
+                        shape = MatrixShapes.Md,
+                        color = if (isSelected) MatrixColors.SurfaceContainerHigh else MatrixColors.SurfaceContainerLow,
+                        border = BorderStroke(
+                            width = if (isSelected) 2.dp else 1.dp,
+                            color = if (isSelected) MatrixColors.Primary else MatrixColors.OutlineVariant
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (theme.isProOnly && !isProActive) {
+                                    onDismiss()
+                                    onOpenPaywall()
+                                } else {
+                                    onSelectTheme(theme)
+                                }
+                            }
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clip(CircleShape)
+                                            .background(colors.surface)
+                                            .border(1.dp, Color.Gray, CircleShape)
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clip(CircleShape)
+                                            .background(colors.primary)
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clip(CircleShape)
+                                            .background(colors.secondary)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Text(
+                                    text = theme.themeName,
+                                    color = MatrixColors.TextHeader,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 14.sp
+                                )
+                            }
+
+                            if (theme.isProOnly && !isProActive) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = Color(0xFFF59E0B).copy(alpha = 0.2f),
+                                    border = BorderStroke(1.dp, Color(0xFFF59E0B))
+                                ) {
+                                    Text(
+                                        text = "PRO",
+                                        color = Color(0xFFF59E0B),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 10.sp,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                    )
+                                }
+                            } else if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    tint = MatrixColors.Primary,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close", color = MatrixColors.Primary)
+            }
+        },
+        containerColor = MatrixColors.SurfaceContainer
+    )
+}
+
+@Composable
 fun ProfileSettingRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     title: String,
     onClick: () -> Unit
 ) {
@@ -421,7 +339,7 @@ fun ProfileSettingRow(
 
 @Composable
 fun ProfileValueRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     title: String,
     value: String,
     onClick: () -> Unit
@@ -452,7 +370,8 @@ fun ProfileValueRow(
             Text(
                 text = value,
                 color = MatrixColors.TextSecondary,
-                fontSize = 13.sp
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium
             )
             Spacer(modifier = Modifier.width(4.dp))
             Icon(

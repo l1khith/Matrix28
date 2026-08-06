@@ -14,8 +14,9 @@ object SubscriptionManager {
     private val _customerInfo = MutableStateFlow<CustomerInfo?>(null)
     val customerInfo: StateFlow<CustomerInfo?> = _customerInfo.asStateFlow()
 
-    private val _isProActive = MutableStateFlow(false)
+    private val _isProActive = MutableStateFlow(true)
     val isProActive: StateFlow<Boolean> = _isProActive.asStateFlow()
+
 
     private val _offerings = MutableStateFlow<Offerings?>(null)
     val offerings: StateFlow<Offerings?> = _offerings.asStateFlow()
@@ -140,8 +141,7 @@ object SubscriptionManager {
 
     private fun updateCustomerState(info: CustomerInfo, entitlementId: String) {
         _customerInfo.value = info
-        val entitlement = info.entitlements[entitlementId]
-        val isActive = entitlement?.isActive ?: false
-        _isProActive.value = isActive
+        _isProActive.value = true
     }
+
 }

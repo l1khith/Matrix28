@@ -39,7 +39,11 @@ import com.l1khith.matrix28.utils.currentTimeMillis
 import com.l1khith.matrix28.viewmodel.FixedCalendarViewModel
 import com.l1khith.matrix28.utils.rememberCalendarPermissionLauncher
 import com.l1khith.matrix28.utils.rememberNotificationPermissionLauncher
+import com.l1khith.matrix28.utils.rememberSecurityLockLauncher
+
+import com.l1khith.matrix28.ui.theme.AppIcons
 import com.l1khith.matrix28.ui.theme.MatrixColors
+
 import com.l1khith.matrix28.ui.theme.MatrixShapes
 
 
@@ -84,6 +88,9 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
             pendingNotificationSaveAction = null
         }
     )
+
+    val launchSecurityLock = rememberSecurityLockLauncher()
+
 
     val todayFixed = remember { FixedCalendarHelper.fromTimestamp(currentTimeMillis()) }
 
@@ -176,13 +183,20 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            Icon(
+                                imageVector = AppIcons.MatrixLogo,
+                                contentDescription = "Matrix 28 Logo",
+                                tint = MatrixColors.Primary,
+                                modifier = Modifier.size(22.dp)
+                            )
                             Text(
                                 text = "Matrix 28",
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF3B82F6)
+                                    color = MatrixColors.Primary
                                 )
                             )
+
                             Surface(
                                 shape = RoundedCornerShape(16.dp),
                                 color = MatrixColors.SurfaceContainerHigh,
@@ -198,6 +212,7 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
                             }
                         }
                     },
+
                     actions = {
                         val downloadedSyncIcon = remember {
                             androidx.compose.ui.graphics.vector.ImageVector.Builder(
@@ -246,19 +261,21 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
 
         },
         floatingActionButton = {
-
-            FloatingActionButton(
-                onClick = {
-                    taskToEdit = null
-                    showAddTaskDialog = true
-                },
-                containerColor = MatrixColors.PrimaryContainer,
-                contentColor = MatrixColors.OnPrimaryContainer,
-                shape = MatrixShapes.Xl
-            ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add Task")
+            if (selectedTab == 0) {
+                FloatingActionButton(
+                    onClick = {
+                        taskToEdit = null
+                        showAddTaskDialog = true
+                    },
+                    containerColor = MatrixColors.PrimaryContainer,
+                    contentColor = MatrixColors.OnPrimaryContainer,
+                    shape = MatrixShapes.Xl
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add Task")
+                }
             }
         },
+
         bottomBar = {
             Column(modifier = Modifier.fillMaxWidth().background(MatrixColors.Surface)) {
                 HorizontalDivider(color = MatrixColors.OutlineVariant, thickness = 1.dp)
@@ -341,15 +358,22 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
                     onEditTask = {
                         taskToEdit = it
                         showAddTaskDialog = true
-                    }
+                    },
+                    isProActive = isProActive,
+                    onOpenPaywall = { showPaywallDialog = true }
                 )
 
-                    2 -> ProfileScreen(
-                        onOpenSubscription = { showPaywallDialog = true },
-                        onOpenCustomerCenter = { showCustomerCenterDialog = true },
-                        onOpenSettings = { showRecurringManager = true },
-                        onOpenMonthView = { selectedTab = 0 }
-                    )
+                2 -> ProfileScreen(
+                    onOpenSubscription = { showPaywallDialog = true },
+                    onOpenCustomerCenter = { showCustomerCenterDialog = true },
+                    onOpenSecurity = launchSecurityLock,
+                    onOpenNotifications = { launchNotificationPermission() },
+                    onOpenMonthView = { selectedTab = 0 }
+                )
+
+
+
+
                     else -> Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -554,7 +578,6 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
     }
 }
 
-
 @Composable
 fun MonthYearSelector(
     selectedDate: FixedDate,
@@ -562,68 +585,60 @@ fun MonthYearSelector(
     primaryColor: Color,
     textColor: Color
 ) {
-    var expandedMonth by remember { mutableStateOf(false) }
+    fun navigateMonth(delta: Int) {
+        var newM = selectedDate.month + delta
+        var newY = selectedDate.year
+        if (newM < 1) {
+            newM = 13
+            newY -= 1
+        } else if (newM > 13) {
+            newM = 1
+            newY += 1
+        }
+        val newDay = if (selectedDate.day == 29 && newM != 6 && newM != 13) 28 else selectedDate.day
+        val isLD = newM == 6 && newDay == 29
+        val isYD = newM == 13 && newDay == 29
+        onDateChange(FixedDate(newY, newM, newDay, isLeapDay = isLD, isYearDay = isYD))
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box {
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { expandedMonth = true }
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        // Month Selector with Arrow Marks
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { navigateMonth(-1) }) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = "Previous Month",
+                    tint = primaryColor
+                )
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = FixedCalendarHelper.getMonthName(selectedDate.month),
                     color = textColor,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
+                    fontSize = 18.sp
                 )
-                Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "(Month ${selectedDate.month} of 13)",
-                    color = MatrixColors.TextSecondary.copy(alpha = 0.6f),
+                    text = "Month ${selectedDate.month} of 13",
+                    color = MatrixColors.TextSecondary,
                     fontWeight = FontWeight.Normal,
-                    fontSize = 14.sp
+                    fontSize = 11.sp
                 )
-
-
+            }
+            IconButton(onClick = { navigateMonth(1) }) {
                 Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Select Month",
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "Next Month",
                     tint = primaryColor
                 )
             }
-
-            DropdownMenu(
-                expanded = expandedMonth,
-                onDismissRequest = { expandedMonth = false },
-                modifier = Modifier.background(Color(0xFF1E293B))
-            ) {
-                for (m in 1..13) {
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = "${FixedCalendarHelper.getMonthName(m)} (M$m)",
-                                color = Color.White
-                            )
-                        },
-                        onClick = {
-                            val newDay = if (selectedDate.day == 29 && m != 6 && m != 13) 28 else selectedDate.day
-                            val isLD = m == 6 && newDay == 29
-                            val isYD = m == 13 && newDay == 29
-                            onDateChange(FixedDate(selectedDate.year, m, newDay, isLeapDay = isLD, isYearDay = isYD))
-                            expandedMonth = false
-                        }
-                    )
-                }
-            }
         }
 
+        // Year Selector with Arrow Marks
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = {
                 onDateChange(selectedDate.copy(year = selectedDate.year - 1))
@@ -638,8 +653,8 @@ fun MonthYearSelector(
                 text = selectedDate.year.toString(),
                 color = textColor,
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
-                modifier = Modifier.padding(horizontal = 8.dp)
+                fontSize = 18.sp,
+                modifier = Modifier.padding(horizontal = 4.dp)
             )
             IconButton(onClick = {
                 onDateChange(selectedDate.copy(year = selectedDate.year + 1))

@@ -1,52 +1,59 @@
 package com.l1khith.matrix28.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 object MatrixColors {
-    val Surface = Color(0xFF131316)
-    val SurfaceDim = Color(0xFF131316)
-    val SurfaceBright = Color(0xFF39393C)
-    val SurfaceContainerLowest = Color(0xFF0E0E11)
-    val SurfaceContainerLow = Color(0xFF1B1B1E)
-    val SurfaceContainer = Color(0xFF1F1F22)
-    val SurfaceContainerHigh = Color(0xFF2A2A2D)
-    val SurfaceContainerHighest = Color(0xFF353437)
+    private val activeTheme: AppTheme get() = ThemeManager.currentTheme.value
+    private val colors: ThemeColors get() = ThemeManager.getColors(activeTheme)
 
-    val OnSurface = Color(0xFFE4E1E5)
-    val OnSurfaceVariant = Color(0xFFC2C6D6)
-    val InverseSurface = Color(0xFFE4E1E5)
-    val InverseOnSurface = Color(0xFF303033)
+    val Surface: Color get() = colors.surface
+    val SurfaceDim: Color get() = colors.surface
+    val SurfaceBright: Color get() = colors.surfaceContainerHigh
+    val SurfaceContainerLowest: Color get() = colors.surface
+    val SurfaceContainerLow: Color get() = colors.surfaceContainerLow
+    val SurfaceContainer: Color get() = colors.surfaceContainerLow
+    val SurfaceContainerHigh: Color get() = colors.surfaceContainerHigh
+    val SurfaceContainerHighest: Color get() = colors.surfaceContainerHigh
 
-    val Outline = Color(0xFF8C909F)
-    val OutlineVariant = Color(0xFF424754)
-    val SurfaceTint = Color(0xFFADC6FF)
+    val OnSurface: Color get() = colors.textHeader
+    val OnSurfaceVariant: Color get() = colors.textSecondary
+    val InverseSurface: Color get() = colors.textHeader
+    val InverseOnSurface: Color get() = colors.surface
 
-    val Primary = Color(0xFFADC6FF)
-    val OnPrimary = Color(0xFF002E6A)
-    val PrimaryContainer = Color(0xFF4D8EFF)
-    val OnPrimaryContainer = Color(0xFF00285D)
-    val InversePrimary = Color(0xFF005AC2)
+    val Outline: Color get() = colors.textSecondary
+    val OutlineVariant: Color get() = colors.outlineVariant
+    val SurfaceTint: Color get() = colors.primary
 
-    val Secondary = Color(0xFFFFB95F)
-    val OnSecondary = Color(0xFF472A00)
-    val SecondaryContainer = Color(0xFFEE9800)
-    val OnSecondaryContainer = Color(0xFF5B3800)
+    val Primary: Color get() = colors.primary
+    val OnPrimary: Color get() = Color.Black
+    val PrimaryContainer: Color get() = colors.primaryContainer
+    val OnPrimaryContainer: Color get() = colors.onPrimaryContainer
+    val InversePrimary: Color get() = colors.primary
 
-    val Tertiary = Color(0xFF4EDEA3)
-    val OnTertiary = Color(0xFF003824)
-    val TertiaryContainer = Color(0xFF00A572)
-    val OnTertiaryContainer = Color(0xFF00311F)
+    val Secondary: Color get() = colors.secondary
+    val OnSecondary: Color get() = Color.Black
+    val SecondaryContainer: Color get() = colors.secondary
+    val OnSecondaryContainer: Color get() = Color.Black
 
-    val Error = Color(0xFFFFB4AB)
-    val OnError = Color(0xFF690005)
-    val ErrorContainer = Color(0xFF93000A)
-    val OnErrorContainer = Color(0xFFFFDAD6)
+    val Tertiary: Color get() = Color(0xFF4EDEA3)
+    val OnTertiary: Color get() = Color(0xFF003824)
+    val TertiaryContainer: Color get() = Color(0xFF00A572)
+    val OnTertiaryContainer: Color get() = Color(0xFF00311F)
 
-    val TextHeader = Color(0xFFFAFAFA)
-    val TextSecondary = Color(0xFFA1A1AA)
+    val Error: Color get() = Color(0xFFFFB4AB)
+    val OnError: Color get() = Color(0xFF690005)
+    val ErrorContainer: Color get() = Color(0xFF93000A)
+    val OnErrorContainer: Color get() = Color(0xFFFFDAD6)
+
+    val TextHeader: Color get() = colors.textHeader
+    val TextSecondary: Color get() = colors.textSecondary
 }
 
 object MatrixShapes {
@@ -56,30 +63,30 @@ object MatrixShapes {
     val Xl = RoundedCornerShape(24.dp)
 }
 
-val MatrixColorScheme = darkColorScheme(
-    primary = MatrixColors.Primary,
-    onPrimary = MatrixColors.OnPrimary,
-    primaryContainer = MatrixColors.PrimaryContainer,
-    onPrimaryContainer = MatrixColors.OnPrimaryContainer,
-    secondary = MatrixColors.Secondary,
-    onSecondary = MatrixColors.OnSecondary,
-    secondaryContainer = MatrixColors.SecondaryContainer,
-    onSecondaryContainer = MatrixColors.OnSecondaryContainer,
-    tertiary = MatrixColors.Tertiary,
-    onTertiary = MatrixColors.OnTertiary,
-    tertiaryContainer = MatrixColors.TertiaryContainer,
-    onTertiaryContainer = MatrixColors.OnTertiaryContainer,
-    error = MatrixColors.Error,
-    onError = MatrixColors.OnError,
-    errorContainer = MatrixColors.ErrorContainer,
-    onErrorContainer = MatrixColors.OnErrorContainer,
-    background = MatrixColors.Surface,
-    onBackground = MatrixColors.OnSurface,
-    surface = MatrixColors.SurfaceContainerLow,
-    onSurface = MatrixColors.OnSurface,
-    surfaceVariant = MatrixColors.SurfaceContainerHigh,
-    onSurfaceVariant = MatrixColors.OnSurfaceVariant,
-    outline = MatrixColors.Outline,
-    outlineVariant = MatrixColors.OutlineVariant,
-    surfaceTint = MatrixColors.SurfaceTint
-)
+@Composable
+fun MatrixTheme(
+    content: @Composable () -> Unit
+) {
+    val currentTheme by ThemeManager.currentTheme.collectAsState()
+    val colors = ThemeManager.getColors(currentTheme)
+
+    val colorScheme = darkColorScheme(
+        primary = colors.primary,
+        onPrimary = Color.Black,
+        primaryContainer = colors.primaryContainer,
+        onPrimaryContainer = colors.onPrimaryContainer,
+        secondary = colors.secondary,
+        background = colors.surface,
+        onBackground = colors.textHeader,
+        surface = colors.surfaceContainerLow,
+        onSurface = colors.textHeader,
+        surfaceVariant = colors.surfaceContainerHigh,
+        onSurfaceVariant = colors.textSecondary,
+        outlineVariant = colors.outlineVariant
+    )
+
+    MaterialTheme(
+        colorScheme = colorScheme,
+        content = content
+    )
+}

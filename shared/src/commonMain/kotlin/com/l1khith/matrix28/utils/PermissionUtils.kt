@@ -15,3 +15,6 @@ expect fun rememberNotificationPermissionLauncher(
     onGranted: () -> Unit,
     onDenied: () -> Unit
 ): () -> Unit
+
+@Composable
+expect fun rememberSecurityLockLauncher(): () -> Unit

@@ -51,6 +51,17 @@
             </intent-filter>
         </receiver>
 
+        <!-- Today's Tasks AppWidget Receiver -->
+        <receiver
+            android:name="com.l1khith.matrix28.widget.TodayTaskWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+        </receiver>
+
+
     </application>
+
 
 </manifest>

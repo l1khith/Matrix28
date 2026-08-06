@@ -27,20 +27,33 @@ actual fun PlatformTimePicker(
 ) {
     if (!show) return
     val context = LocalContext.current
-    val parts = initialTime.split(":")
-    val hour = parts.getOrNull(0)?.toIntOrNull() ?: 12
-    val min = parts.getOrNull(1)?.toIntOrNull() ?: 0
+    var hour = 7
+    var min = 0
+    try {
+        val clean = initialTime.replace(" Daily", "")
+        val parts = clean.split(" ", ":")
+        hour = parts.getOrNull(0)?.toIntOrNull() ?: 7
+        min = parts.getOrNull(1)?.toIntOrNull() ?: 0
+        if (clean.contains("PM", ignoreCase = true) && hour < 12) hour += 12
+        if (clean.contains("AM", ignoreCase = true) && hour == 12) hour = 0
+    } catch (_: Exception) {}
 
     DisposableEffect(show) {
         val dialog = TimePickerDialog(
             context,
             { _, h, m ->
-                val formatted = "${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}"
+                val amPm = if (h >= 12) "PM" else "AM"
+                val hour12 = when {
+                    h == 0 -> 12
+                    h > 12 -> h - 12
+                    else -> h
+                }
+                val formatted = "${hour12.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} $amPm"
                 onTimeSelected(formatted)
             },
             hour,
             min,
-            true
+            false
         )
         dialog.setOnDismissListener { onDismiss() }
         dialog.show()

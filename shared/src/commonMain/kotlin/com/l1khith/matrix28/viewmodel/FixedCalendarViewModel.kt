@@ -160,9 +160,13 @@ class FixedCalendarViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.Default) {
             com.l1khith.matrix28.utils.cancelTaskAlarm(task)
             db.deleteTask(task.id)
+            if (task.recurringParentId != null) {
+                db.deleteRecurringTask(task.recurringParentId)
+            }
             loadState(targetDate)
         }
     }
+
 
     fun toggleTaskCompletion(task: AppTask) {
         val targetDate = _selectedDate.value

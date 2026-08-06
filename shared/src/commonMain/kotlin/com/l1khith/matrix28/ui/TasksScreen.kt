@@ -33,8 +33,11 @@ import com.l1khith.matrix28.viewmodel.FixedCalendarViewModel
 @Composable
 fun TasksScreen(
     viewModel: FixedCalendarViewModel,
-    onEditTask: (AppTask) -> Unit
+    onEditTask: (AppTask) -> Unit,
+    isProActive: Boolean = false,
+    onOpenPaywall: () -> Unit = {}
 ) {
+
     val allTasks by viewModel.allTasks
     var searchQuery by remember { mutableStateOf("") }
 
@@ -315,9 +318,18 @@ fun TasksScreen(
                     }
                 }
             }
+
+            // Section 4: 28-Day Habit Cycles (Pro Feature)
+            item {
+                HabitSection(
+                    isProActive = isProActive,
+                    onOpenPaywall = onOpenPaywall
+                )
+            }
         }
     }
 }
+
 
 @Composable
 fun UrgentTaskCard(

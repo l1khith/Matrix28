@@ -49,8 +49,12 @@ fun CreateTaskScreen(
         isActive: Boolean,
         endDate: String?,
         reminderTime: String?
-    ) -> Unit = { _, _, _, _, _, _, _, _, _, _ -> }
+    ) -> Unit = { _, _, _, _, _, _, _, _, _, _ -> },
+    existingRecurringCount: Int = 0,
+    isProActive: Boolean = false,
+    onOpenPaywall: () -> Unit = {}
 ) {
+
     var title by remember { mutableStateOf(task?.title ?: "") }
     var description by remember { mutableStateOf(task?.description ?: "") }
     var taskTypeLabel by remember(task) {
@@ -78,22 +82,27 @@ fun CreateTaskScreen(
         } else description.trim()
 
         if (taskTypeLabel == "Recurring") {
-            onSaveRecurring(
-                task?.id,
-                title.trim(),
-                finalDesc,
-                recurrenceType,
-                emptyList(),
-                1,
-                priority,
-                true,
-                null,
-                if (isReminder) reminderTime else null
-            )
+            if (!isProActive && existingRecurringCount >= 1 && task == null) {
+                onOpenPaywall()
+            } else {
+                onSaveRecurring(
+                    task?.id,
+                    title.trim(),
+                    finalDesc,
+                    recurrenceType,
+                    emptyList(),
+                    1,
+                    priority,
+                    true,
+                    null,
+                    if (isReminder) reminderTime else null
+                )
+            }
         } else {
             onSave(task?.id, title.trim(), finalDesc, isReminder, reminderTime, priority)
         }
     }
+
 
     val notifPermissionLauncher = com.l1khith.matrix28.utils.rememberNotificationPermissionLauncher(
         onGranted = { performSave() },
@@ -428,7 +437,13 @@ fun CreateTaskScreen(
                             Card(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .clickable { showAddCategoryDialog = true },
+                                    .clickable {
+                                        if (isProActive) {
+                                            showAddCategoryDialog = true
+                                        } else {
+                                            onOpenPaywall()
+                                        }
+                                    },
                                 shape = MatrixShapes.Xl,
                                 colors = CardDefaults.cardColors(
                                     containerColor = if (customCategoryName != null) MatrixColors.PrimaryContainer else Color.Transparent
@@ -438,6 +453,7 @@ fun CreateTaskScreen(
                                     if (customCategoryName != null) MatrixColors.Primary else MatrixColors.OutlineVariant
                                 )
                             ) {
+
                                 Row(
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
                                     verticalAlignment = Alignment.CenterVertically,
