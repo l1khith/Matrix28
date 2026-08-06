@@ -37,13 +37,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             App()
         }
-
-        // Only request notification permission on startup if required (API 33+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestPermissionsLauncher.launch(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS))
-        }
     }
 }
+
 
 @Preview
 @Composable

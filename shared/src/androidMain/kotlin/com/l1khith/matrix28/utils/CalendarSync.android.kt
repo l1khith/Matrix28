@@ -20,7 +20,7 @@ actual fun importSystemCalendarEvents(): List<AppTask> {
         }
 
         val now = currentTimeMillis()
-        val startRange = now - (30L * 24 * 60 * 60 * 1000L) // 30 days ago
+        val startRange = now // From today onwards (no old past events)
         val endRange = now + (365L * 24 * 60 * 60 * 1000L) // 365 days future
 
         val builder = CalendarContract.Instances.CONTENT_URI.buildUpon()
@@ -43,6 +43,8 @@ actual fun importSystemCalendarEvents(): List<AppTask> {
             "${CalendarContract.Instances.BEGIN} ASC"
         )
 
+        val todayStr = FixedCalendarHelper.fromTimestamp(now).toString()
+
         cursor?.use { c ->
             val idIndex = c.getColumnIndexOrThrow(CalendarContract.Instances.EVENT_ID)
             val titleIndex = c.getColumnIndexOrThrow(CalendarContract.Instances.TITLE)
@@ -59,6 +61,11 @@ actual fun importSystemCalendarEvents(): List<AppTask> {
 
                 val fixedDate = FixedCalendarHelper.fromTimestamp(startMillis)
                 val associatedDate = fixedDate.toString()
+
+                if (associatedDate < todayStr) {
+                    continue
+                }
+
 
                 val isReminder = 0
                 val reminderTime = if (isAllDay) {

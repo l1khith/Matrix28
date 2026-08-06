@@ -244,4 +244,13 @@ object FixedCalendarHelper {
             FixedDate(prevYear, 13, 29, isYearDay = true).toString()
         }
     }
+
+    fun daysBetween(dateStr1: String, dateStr2: String): Int {
+        val d1 = parseDateStr(dateStr1) ?: return 0
+        val d2 = parseDateStr(dateStr2) ?: return 0
+        val t1 = toTimestamp(d1)
+        val t2 = toTimestamp(d2)
+        return ((t2 - t1) / 86400000L).toInt()
+    }
 }
+

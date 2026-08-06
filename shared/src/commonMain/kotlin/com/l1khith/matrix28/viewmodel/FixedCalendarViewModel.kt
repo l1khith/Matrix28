@@ -40,6 +40,10 @@ class FixedCalendarViewModel : ViewModel() {
     private val _recurringTasks = mutableStateOf<List<RecurringTask>>(emptyList())
     val recurringTasks: State<List<RecurringTask>> = _recurringTasks
 
+    // All Tasks state for Tasks screen
+    private val _allTasks = mutableStateOf<List<AppTask>>(emptyList())
+    val allTasks: State<List<AppTask>> = _allTasks
+
     init {
         val currentSelDate = _selectedDate.value
         viewModelScope.launch(Dispatchers.Default) {
@@ -61,7 +65,18 @@ class FixedCalendarViewModel : ViewModel() {
         loadTasksForSelectedDay(fixedDate)
         loadDatesWithActiveTasks()
         loadRecurringTasks()
+        loadAllTasks()
     }
+
+    fun loadAllTasks() {
+        viewModelScope.launch(Dispatchers.Default) {
+            val list = db.getAllTasks()
+            withContext(Dispatchers.Main.immediate) {
+                _allTasks.value = list
+            }
+        }
+    }
+
 
     private fun loadTasksForSelectedDay(fixedDate: FixedDate = _selectedDate.value) {
         val dateStr = fixedDate.toString()
@@ -310,14 +325,20 @@ class FixedCalendarViewModel : ViewModel() {
 
     fun importSystemCalendar() {
         val targetDate = _selectedDate.value
+        val todayStr = FixedCalendarHelper.fromTimestamp(currentTimeMillis()).toString()
         viewModelScope.launch(Dispatchers.Default) {
             val systemEvents = com.l1khith.matrix28.utils.importSystemCalendarEvents()
             for (task in systemEvents) {
-                db.insertTask(task)
+                if (task.associatedDate >= todayStr) {
+                    if (!db.updateTask(task)) {
+                        db.insertTask(task)
+                    }
+                }
             }
             loadState(targetDate)
         }
     }
+
 
     fun getIcsExportString(): String {
         val allTasks = db.getAllTasks()

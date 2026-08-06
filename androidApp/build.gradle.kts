@@ -1,4 +1,11 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+
+val secretsFile = rootProject.file("secrets.properties")
+val secrets = Properties()
+if (secretsFile.exists()) {
+    secrets.load(secretsFile.inputStream())
+}
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -54,6 +61,9 @@ android {
         versionCode = 1
         versionName = "1.0.0"
 
+        val rcKey = secrets.getProperty("REVENUECAT_API_KEY") ?: ""
+        buildConfigField("String", "REVENUECAT_API_KEY", "\"$rcKey\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         resourceConfigurations += listOf("en")
     }
@@ -92,9 +102,12 @@ android {
 
     kotlinOptions {
         jvmTarget = "11"
+        freeCompilerArgs += listOf("-Xskip-metadata-version-check")
     }
+
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }

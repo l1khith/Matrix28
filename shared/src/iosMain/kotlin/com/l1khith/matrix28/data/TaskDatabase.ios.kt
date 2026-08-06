@@ -5,9 +5,10 @@ actual class TaskDatabase actual constructor() {
     private val recurringTasks = mutableListOf<RecurringTask>()
 
     actual fun insertTask(task: AppTask): Boolean {
-        tasks.removeAll { it.id == task.id }
+        if (tasks.any { it.id == task.id }) return false
         return tasks.add(task)
     }
+
 
     actual fun updateTask(task: AppTask): Boolean {
         val index = tasks.indexOfFirst { it.id == task.id }
@@ -60,30 +61,22 @@ actual class TaskDatabase actual constructor() {
     }
 
     actual fun rolloverTasks(prevDate: String, currDate: String): Int {
-        tasks.removeAll { it.associatedDate == prevDate && it.isGenerated == 1 && !it.completed }
-        var count = 0
-        val uncompletedManual = tasks.filter { it.associatedDate == prevDate && it.isGenerated == 0 && !it.completed }
-        tasks.removeAll { it.associatedDate == prevDate && it.isGenerated == 0 && !it.completed }
-        uncompletedManual.forEach { task ->
-            val rolled = task.copy(associatedDate = currDate)
-            tasks.add(rolled)
-            count++
-        }
-        return count
+        return 0
     }
 
     actual fun catchUpRollover(currDate: String): Int {
         tasks.removeAll { it.associatedDate < currDate && it.isGenerated == 1 && !it.completed }
-        var count = 0
-        val uncompletedManual = tasks.filter { it.associatedDate < currDate && it.isGenerated == 0 && !it.completed }
-        tasks.removeAll { it.associatedDate < currDate && it.isGenerated == 0 && !it.completed }
-        uncompletedManual.forEach { task ->
-            val rolled = task.copy(associatedDate = currDate)
-            tasks.add(rolled)
-            count++
+        val currFixed = FixedCalendarHelper.parseDateStr(currDate)
+        if (currFixed != null) {
+            val currMs = FixedCalendarHelper.toTimestamp(currFixed)
+            val sevenDaysAgoMs = currMs - 7 * 86400000L
+            val sevenDaysAgoStr = FixedCalendarHelper.fromTimestamp(sevenDaysAgoMs).toString()
+            tasks.removeAll { it.associatedDate < sevenDaysAgoStr && !it.completed }
         }
-        return count
+        return 0
     }
+
+
 
     actual fun insertGeneratedTask(task: AppTask): Boolean {
         return insertTask(task)

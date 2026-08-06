@@ -4,6 +4,8 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import com.l1khith.matrix28.utils.FixedCalendarHelper
+
 
 object AppContext {
     @Volatile
@@ -112,9 +114,10 @@ actual class TaskDatabase actual constructor() {
             put(COLUMN_RECURRING_PARENT_ID, task.recurringParentId)
             put(COLUMN_IS_GENERATED, task.isGenerated)
         }
-        val result = db.insertWithOnConflict(TABLE_TASKS, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+        val result = db.insertWithOnConflict(TABLE_TASKS, null, values, SQLiteDatabase.CONFLICT_IGNORE)
         return result != -1L
     }
+
 
     actual fun updateTask(task: AppTask): Boolean {
         val db = helper.writableDatabase
@@ -261,27 +264,26 @@ actual class TaskDatabase actual constructor() {
     }
 
     actual fun rolloverTasks(prevDate: String, currDate: String): Int {
-        val db = helper.writableDatabase
-        // Delete generated recurring tasks from prevDate so they don't pile up
-        db.delete(TABLE_TASKS, "$COLUMN_ASSOCIATED_DATE = ? AND $COLUMN_IS_GENERATED = 1 AND $COLUMN_IS_COMPLETED = 0", arrayOf(prevDate))
-        val values = ContentValues().apply {
-            put(COLUMN_ASSOCIATED_DATE, currDate)
-        }
-        return db.update(
-            TABLE_TASKS, values,
-            "$COLUMN_ASSOCIATED_DATE = ? AND $COLUMN_IS_GENERATED = 0 AND $COLUMN_IS_COMPLETED = 0",
-            arrayOf(prevDate)
-        )
+        return 0
     }
 
     actual fun catchUpRollover(currDate: String): Int {
         val db = helper.writableDatabase
         db.beginTransaction()
-        var updatedRows = 0
         try {
-            // Delete all past uncompleted generated recurring instances so routines never pile up on today
+            // Delete all past uncompleted generated recurring instances so routines never pile up
             db.delete(TABLE_TASKS, "$COLUMN_ASSOCIATED_DATE < ? AND $COLUMN_IS_GENERATED = 1 AND $COLUMN_IS_COMPLETED = 0", arrayOf(currDate))
-            // Purge any existing duplicate generated tasks for the same associated_date and recurring_parent_id (Bug #6)
+
+            // After 7 days, if not canceled/completed, uncompleted manual tasks are saved as terminated (purged from overdue)
+            val currFixed = FixedCalendarHelper.parseDateStr(currDate)
+            if (currFixed != null) {
+                val currMs = FixedCalendarHelper.toTimestamp(currFixed)
+                val sevenDaysAgoMs = currMs - 7 * 86400000L
+                val sevenDaysAgoStr = FixedCalendarHelper.fromTimestamp(sevenDaysAgoMs).toString()
+                db.delete(TABLE_TASKS, "$COLUMN_ASSOCIATED_DATE < ? AND $COLUMN_IS_COMPLETED = 0", arrayOf(sevenDaysAgoStr))
+            }
+
+            // Purge any existing duplicate generated tasks for the same associated_date and recurring_parent_id
             db.execSQL("""
                 DELETE FROM $TABLE_TASKS 
                 WHERE $COLUMN_IS_GENERATED = 1 AND $COLUMN_RECURRING_PARENT_ID IS NOT NULL AND rowid NOT IN (
@@ -291,21 +293,14 @@ actual class TaskDatabase actual constructor() {
                     GROUP BY $COLUMN_ASSOCIATED_DATE, $COLUMN_RECURRING_PARENT_ID
                 )
             """.trimIndent())
-            // Roll over ONLY manual user-created single tasks
-            val values = ContentValues().apply {
-                put(COLUMN_ASSOCIATED_DATE, currDate)
-            }
-            updatedRows = db.update(
-                TABLE_TASKS, values,
-                "$COLUMN_ASSOCIATED_DATE < ? AND $COLUMN_IS_GENERATED = 0 AND $COLUMN_IS_COMPLETED = 0",
-                arrayOf(currDate)
-            )
             db.setTransactionSuccessful()
         } finally {
             db.endTransaction()
         }
-        return updatedRows
+
+        return 0
     }
+
 
     actual fun insertGeneratedTask(task: AppTask): Boolean {
         return insertTask(task)
