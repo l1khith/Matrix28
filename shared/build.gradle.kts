@@ -1,4 +1,11 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+
+val secretsFile = rootProject.file("secrets.properties")
+val secrets = Properties()
+if (secretsFile.exists()) {
+    secrets.load(secretsFile.inputStream())
+}
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -9,8 +16,14 @@ plugins {
 
 kotlin {
     compilerOptions {
-        freeCompilerArgs.add("-Xexpect-actual-classes")
+        freeCompilerArgs.addAll(
+            listOf(
+                "-Xexpect-actual-classes",
+                "-Xskip-metadata-version-check"
+            )
+        )
     }
+
 
     androidTarget {
         compilerOptions {
@@ -52,6 +65,8 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.revenuecat.purchases.kmp.core)
+            implementation(libs.revenuecat.purchases.kmp.ui)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -66,6 +81,12 @@ android {
 
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+        val rcKey = secrets.getProperty("REVENUECAT_API_KEY") ?: ""
+        buildConfigField("String", "REVENUECAT_API_KEY", "\"$rcKey\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     testOptions {

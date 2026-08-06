@@ -1,5 +1,5 @@
 [versions]
-agp = "8.5.2"
+agp = "8.6.1"
 android-compileSdk = "35"
 android-minSdk = "26"
 android-targetSdk = "35"
@@ -10,12 +10,15 @@ androidx-espresso = "3.6.1"
 androidx-fragment = "1.8.6"
 androidx-lifecycle = "2.8.4"
 androidx-testExt = "1.2.1"
-composeMultiplatform = "1.6.11"
+composeMultiplatform = "1.7.3"
 junit = "4.13.2"
-kotlin = "2.0.20"
+kotlin = "2.1.10"
+
+
 kotlin-wrappers = "1.0.0-pre.736"
 kotlinx-coroutines = "1.9.0"
 material3 = "1.6.11"
+revenuecat = "3.4.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -44,6 +47,8 @@ compose-uiToolingPreview = { module = "org.jetbrains.compose.ui:ui-tooling-previ
 play-services-ads = { module = "com.google.android.gms:play-services-ads", version = "23.6.0" }
 kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
 wrappers-browser = { module = "org.jetbrains.kotlin-wrappers:kotlin-browser", version.ref = "kotlin-wrappers" }
+revenuecat-purchases-kmp-core = { module = "com.revenuecat.purchases:purchases-kmp-core", version.ref = "revenuecat" }
+revenuecat-purchases-kmp-ui = { module = "com.revenuecat.purchases:purchases-kmp-ui", version.ref = "revenuecat" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
