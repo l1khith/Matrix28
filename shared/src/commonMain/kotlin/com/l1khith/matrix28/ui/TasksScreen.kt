@@ -38,7 +38,7 @@ fun TasksScreen(
     onOpenPaywall: () -> Unit = {}
 ) {
 
-    val allTasks by viewModel.allTasks
+    val allTasks by viewModel.allTasks.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
 
     val todayFixed = remember { FixedCalendarHelper.fromTimestamp(currentTimeMillis()) }

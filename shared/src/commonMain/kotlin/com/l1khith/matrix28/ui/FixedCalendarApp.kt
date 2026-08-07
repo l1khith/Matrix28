@@ -50,10 +50,10 @@ import com.l1khith.matrix28.ui.theme.MatrixShapes
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
-    val selectedDate by viewModel.selectedDate
-    val tasks by viewModel.tasksForSelectedDay
-    val activeDates by viewModel.datesWithActiveTasks
-    val recurringTasks by viewModel.recurringTasks
+    val selectedDate by viewModel.selectedDate.collectAsState()
+    val tasks by viewModel.tasksForSelectedDay.collectAsState()
+    val activeDates by viewModel.datesWithActiveTasks.collectAsState()
+    val recurringTasks by viewModel.recurringTasks.collectAsState()
 
     var showAddTaskDialog by remember { mutableStateOf(false) }
     var taskToEdit by remember { mutableStateOf<AppTask?>(null) }
@@ -391,7 +391,7 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            val taskCounts by viewModel.taskCountsPerDate
+            val taskCounts by viewModel.taskCountsPerDate.collectAsState()
 
             CalendarMatrix(
                 selectedDate = selectedDate,
@@ -988,7 +988,7 @@ fun AgendaList(
                 }
 
             }
-            items(reminders, key = { it.id }) { task ->
+            items(reminders, key = { "rem_${it.id}" }) { task ->
                 ReminderItem(
                     task = task,
                     onToggleComplete = onToggleComplete,
@@ -1023,7 +1023,7 @@ fun AgendaList(
                     )
                 }
             }
-            items(todos, key = { it.id }) { task ->
+            items(todos, key = { "todo_${it.id}" }) { task ->
                 TodoItem(
                     task = task,
                     onToggleComplete = onToggleComplete,
@@ -1047,7 +1047,8 @@ fun AgendaList(
                     modifier = Modifier.padding(bottom = 4.dp, top = 8.dp)
                 )
             }
-            items(recurring, key = { it.id }) { task ->
+            items(recurring, key = { "rec_${it.id}" }) { task ->
+
                 TodoItem(
                     task = task,
                     onToggleComplete = onToggleComplete,

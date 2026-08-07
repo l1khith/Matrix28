@@ -12,6 +12,9 @@ import com.l1khith.matrix28.utils.FixedCalendarHelper
 import com.l1khith.matrix28.utils.FixedDate
 import com.l1khith.matrix28.utils.currentTimeMillis
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.uuid.ExperimentalUuidApi
@@ -23,26 +26,26 @@ class FixedCalendarViewModel : ViewModel() {
     private val db = TaskDatabase()
 
     // Calendar navigation state
-    private val _selectedDate = mutableStateOf(FixedCalendarHelper.fromTimestamp(currentTimeMillis()))
-    val selectedDate: State<FixedDate> = _selectedDate
+    private val _selectedDate = MutableStateFlow(FixedCalendarHelper.fromTimestamp(currentTimeMillis()))
+    val selectedDate: StateFlow<FixedDate> = _selectedDate.asStateFlow()
 
     // Task list and indicator state
-    private val _tasksForSelectedDay = mutableStateOf<List<AppTask>>(emptyList())
-    val tasksForSelectedDay: State<List<AppTask>> = _tasksForSelectedDay
+    private val _tasksForSelectedDay = MutableStateFlow<List<AppTask>>(emptyList())
+    val tasksForSelectedDay: StateFlow<List<AppTask>> = _tasksForSelectedDay.asStateFlow()
 
-    private val _datesWithActiveTasks = mutableStateOf<Set<String>>(emptySet())
-    val datesWithActiveTasks: State<Set<String>> = _datesWithActiveTasks
+    private val _datesWithActiveTasks = MutableStateFlow<Set<String>>(emptySet())
+    val datesWithActiveTasks: StateFlow<Set<String>> = _datesWithActiveTasks.asStateFlow()
 
-    private val _taskCountsPerDate = mutableStateOf<Map<String, Int>>(emptyMap())
-    val taskCountsPerDate: State<Map<String, Int>> = _taskCountsPerDate
+    private val _taskCountsPerDate = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val taskCountsPerDate: StateFlow<Map<String, Int>> = _taskCountsPerDate.asStateFlow()
 
     // Recurring Tasks state
-    private val _recurringTasks = mutableStateOf<List<RecurringTask>>(emptyList())
-    val recurringTasks: State<List<RecurringTask>> = _recurringTasks
+    private val _recurringTasks = MutableStateFlow<List<RecurringTask>>(emptyList())
+    val recurringTasks: StateFlow<List<RecurringTask>> = _recurringTasks.asStateFlow()
 
     // All Tasks state for Tasks screen
-    private val _allTasks = mutableStateOf<List<AppTask>>(emptyList())
-    val allTasks: State<List<AppTask>> = _allTasks
+    private val _allTasks = MutableStateFlow<List<AppTask>>(emptyList())
+    val allTasks: StateFlow<List<AppTask>> = _allTasks.asStateFlow()
 
     init {
         val currentSelDate = _selectedDate.value
