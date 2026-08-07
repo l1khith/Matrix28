@@ -19,8 +19,11 @@ dependencies {
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.compose.uiToolingPreview)
     implementation(libs.play.services.ads)
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
     debugImplementation(libs.compose.uiTooling)
 }
+
 
 android {
     namespace = "com.l1khith.matrix28"
