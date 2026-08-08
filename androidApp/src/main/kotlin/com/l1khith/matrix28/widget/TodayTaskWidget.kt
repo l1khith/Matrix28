@@ -79,10 +79,11 @@ class TodayTaskWidget : GlanceAppWidget() {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Image(
-                        provider = ImageProvider(R.drawable.ic_matrix_logo_blue),
+                        provider = ImageProvider(R.drawable.ic_matrix28_logo),
                         contentDescription = "Matrix 28 Logo",
-                        modifier = GlanceModifier.width(18.dp).height(18.dp)
+                        modifier = GlanceModifier.width(20.dp).height(20.dp)
                     )
+
                     Spacer(modifier = GlanceModifier.width(6.dp))
                     Text(
                         text = "MATRIX 28",

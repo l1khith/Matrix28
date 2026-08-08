@@ -9,7 +9,35 @@ import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.unit.dp
 
 object AppIcons {
+    val AppLogo: ImageVector
+        @Composable get() = remember {
+            ImageVector.Builder(
+                name = "AppLogo",
+                defaultWidth = 108.dp, defaultHeight = 108.dp,
+                viewportWidth = 108f, viewportHeight = 108f
+            ).addPath(
+                pathData = PathParser().parsePathString("M0 0h108v108H0z").toNodes(),
+                fill = SolidColor(Color(0xFF121212))
+            ).addPath(
+                pathData = PathParser().parsePathString("M32 24h40c2.2 0 4 1.8 4 4v12L64 28H32z").toNodes(),
+                fill = SolidColor(Color(0xFF2563EB))
+            ).addPath(
+                pathData = PathParser().parsePathString("M32 28h32l12 12v40c0 2.2-1.8 4-4 4H36c-2.2 0-4-1.8-4-4V28z").toNodes(),
+                fill = SolidColor(Color(0xFF3B82F6))
+            ).addPath(
+                pathData = PathParser().parsePathString("M64 28l12 12h-8c-2.2 0-4-1.8-4-4v-8z").toNodes(),
+                fill = SolidColor(Color(0xFF1D4ED8))
+            ).addPath(
+                pathData = PathParser().parsePathString("M43 51c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4c0 2.5-2.5 5-9 11v3h10v-3.5h-5.5l3-3c2.5-2.5 3.5-5 3.5-7.5 0-4-3-6.5-6.5-6.5S41 47 41 51h2z").toNodes(),
+                fill = SolidColor(Color.White)
+            ).addPath(
+                pathData = PathParser().parsePathString("M60.5 44.5c-3.5 0-5.5 2-5.5 4.5 0 2 1.5 3.5 3 4.5-2 1-4 2.5-4 5.5 0 3 2.5 6 6.5 6s6.5-3 6.5-6c0-3-2-4.5-4-5.5 1.5-1 3-2.5 3-4.5 0-2.5-2-4.5-5.5-4.5zm0 2.5c1.5 0 3 1 3 2.5s-1.5 2.5-3 2.5-3-1-3-2.5 1.5-2.5 3-2.5zm0 7.5c2 0 4 1.5 4 4.5s-2 3.5-4 3.5-4-.5-4-3.5 2-4.5 4-4.5z").toNodes(),
+                fill = SolidColor(Color.White)
+            ).build()
+        }
+
     val Subscription: ImageVector
+
         @Composable get() = remember {
             ImageVector.Builder(
                 name = "SubscriptionIcon",

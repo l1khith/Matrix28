@@ -184,11 +184,12 @@ fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Icon(
-                                imageVector = AppIcons.MatrixLogo,
+                                imageVector = AppIcons.AppLogo,
                                 contentDescription = "Matrix 28 Logo",
-                                tint = MatrixColors.Primary,
-                                modifier = Modifier.size(22.dp)
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(24.dp)
                             )
+
                             Text(
                                 text = "Matrix 28",
                                 style = MaterialTheme.typography.titleLarge.copy(
