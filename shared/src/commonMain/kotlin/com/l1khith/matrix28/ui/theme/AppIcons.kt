@@ -136,16 +136,6 @@ object AppIcons {
         }
 
     val MatrixLogo: ImageVector
-        @Composable get() = remember {
-            ImageVector.Builder(
-                name = "MatrixLogo",
-                defaultWidth = 20.dp, defaultHeight = 16.dp,
-                viewportWidth = 20f, viewportHeight = 16f
-            ).addPath(
-                pathData = PathParser().parsePathString(
-                    "M2 16C1.45 16 0.979167 15.8042 0.5875 15.4125C0.195833 15.0208 0 14.55 0 14V2C0 1.45 0.195833 0.979167 0.5875 0.5875C0.979167 0.195833 1.45 0 2 0H18C18.55 0 19.0208 0.195833 19.4125 0.5875C19.8042 0.979167 20 1.45 20 2V14C20 14.55 19.8042 15.0208 19.4125 15.4125C19.0208 15.8042 18.55 16 18 16H2ZM2 7H6V2H2V7ZM8 7H12V2H8V7ZM14 7H18V2H14V7ZM6 14V9H2V14H6ZM8 14H12V9H8V14ZM14 14H18V9H14V14Z"
-                ).toNodes(),
-                fill = SolidColor(MatrixColors.Primary)
-            ).build()
-        }
+        @Composable get() = AppLogo
 }
+
