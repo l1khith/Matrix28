@@ -51,12 +51,18 @@ import com.l1khith.matrix28.ui.theme.MatrixShapes
 @Composable
 fun FixedCalendarApp(
     viewModel: FixedCalendarViewModel,
-    initialTaskId: String? = null
+    initialTaskId: String? = null,
+    onExitApp: () -> Unit = {}
 ) {
     LaunchedEffect(initialTaskId) {
         if (initialTaskId != null) {
             viewModel.onTaskSelected(initialTaskId)
         }
+    }
+
+    val coroutineScope = rememberCoroutineScope()
+    LaunchedEffect(Unit) {
+        com.l1khith.matrix28.billing.SubscriptionManager.initDataStore(coroutineScope)
     }
 
     val selectedDate by viewModel.selectedDate.collectAsState()
@@ -71,8 +77,17 @@ fun FixedCalendarApp(
     var showIcsImportDialog by remember { mutableStateOf(false) }
     var showPaywallDialog by remember { mutableStateOf(false) }
     var showCustomerCenterDialog by remember { mutableStateOf(false) }
+    var showExitDialog by remember { mutableStateOf(false) }
 
     val isProActive by com.l1khith.matrix28.billing.SubscriptionManager.isProActive.collectAsState()
+
+    com.l1khith.matrix28.utils.PlatformBackHandler(enabled = true) {
+        if (isProActive) {
+            onExitApp()
+        } else {
+            showExitDialog = true
+        }
+    }
 
     var pendingCalendarImportAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     var pendingNotificationSaveAction by remember { mutableStateOf<(() -> Unit)?>(null) }
@@ -288,6 +303,9 @@ fun FixedCalendarApp(
 
         bottomBar = {
             Column(modifier = Modifier.fillMaxWidth().background(MatrixColors.Surface)) {
+                if (!isProActive) {
+                    BannerAd(modifier = Modifier.fillMaxWidth())
+                }
                 HorizontalDivider(color = MatrixColors.OutlineVariant, thickness = 1.dp)
                 NavigationBar(
                     containerColor = MatrixColors.Surface,
@@ -416,46 +434,54 @@ fun FixedCalendarApp(
                 textColor = textColorPrimary
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            if (!isProActive) {
+                Spacer(modifier = Modifier.height(12.dp))
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showPaywallDialog = true },
-                shape = MatrixShapes.Md,
-                colors = CardDefaults.cardColors(containerColor = cardBackground),
-                border = BorderStroke(1.dp, borderSubtle)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MatrixShapes.Md,
+                    colors = CardDefaults.cardColors(containerColor = cardBackground),
+                    border = BorderStroke(1.dp, borderSubtle)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Ad",
-                            tint = textColorSecondary,
-                            modifier = Modifier.size(20.dp)
-                        )
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Notifications,
+                                    contentDescription = "Ad",
+                                    tint = textColorSecondary,
+                                    modifier = Modifier.size(20.dp)
+                                )
 
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Ad Space / Go Pro to Remove",
-                            color = textColorSecondary,
-                            fontSize = 13.sp
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Ad Space / Go Pro to Remove",
+                                    color = textColorSecondary,
+                                    fontSize = 13.sp
+                                )
+                            }
+                            Button(
+                                onClick = { showPaywallDialog = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                                border = BorderStroke(1.dp, borderSubtle),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                shape = MatrixShapes.Sm
+                            ) {
+                                Text("Remove Ads", color = textColorPrimary, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                            }
+                        }
+
+                        BannerAd(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
                         )
-                    }
-                    Button(
-                        onClick = { showPaywallDialog = true },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                        border = BorderStroke(1.dp, borderSubtle),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                        shape = MatrixShapes.Sm
-                    ) {
-                        Text("Remove Ads", color = textColorPrimary, fontSize = 11.sp, fontWeight = FontWeight.Medium)
                     }
                 }
             }
@@ -584,6 +610,16 @@ fun FixedCalendarApp(
     if (showCustomerCenterDialog) {
         CustomerCenterDialog(
             onDismiss = { showCustomerCenterDialog = false }
+        )
+    }
+
+    if (showExitDialog) {
+        ExitAppDialog(
+            onDismiss = { showExitDialog = false },
+            onConfirmExit = {
+                showExitDialog = false
+                onExitApp()
+            }
         )
     }
 }

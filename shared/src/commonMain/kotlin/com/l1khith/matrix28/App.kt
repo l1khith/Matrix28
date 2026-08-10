@@ -7,9 +7,16 @@ import com.l1khith.matrix28.ui.theme.MatrixTheme
 import com.l1khith.matrix28.viewmodel.FixedCalendarViewModel
 
 @Composable
-fun App(initialTaskId: String? = null) {
+fun App(
+    initialTaskId: String? = null,
+    onExitApp: () -> Unit = {}
+) {
     MatrixTheme {
         val viewModel: FixedCalendarViewModel = viewModel { FixedCalendarViewModel() }
-        FixedCalendarApp(viewModel = viewModel, initialTaskId = initialTaskId)
+        FixedCalendarApp(
+            viewModel = viewModel,
+            initialTaskId = initialTaskId,
+            onExitApp = onExitApp
+        )
     }
 }

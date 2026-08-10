@@ -18,6 +18,13 @@ actual fun copyToClipboard(text: String) {
     } catch (_: Exception) {}
 }
 
+actual fun showPlatformToast(message: String) {
+    try {
+        val context = AppContext.get()
+        android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+    } catch (_: Exception) {}
+}
+
 @Composable
 actual fun PlatformTimePicker(
     show: Boolean,
@@ -63,4 +70,9 @@ actual fun PlatformTimePicker(
             }
         }
     }
+}
+
+@Composable
+actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) {
+    androidx.activity.compose.BackHandler(enabled = enabled, onBack = onBack)
 }

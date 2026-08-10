@@ -7,6 +7,10 @@ actual fun copyToClipboard(text: String) {
     UIPasteboard.generalPasteboard.string = text
 }
 
+actual fun showPlatformToast(message: String) {
+    // iOS no-op
+}
+
 @Composable
 actual fun PlatformTimePicker(
     show: Boolean,
@@ -22,4 +26,9 @@ actual fun PlatformTimePicker(
             onTimeSelected = onTimeSelected
         )
     }
+}
+
+@Composable
+actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) {
+    // iOS no-op
 }

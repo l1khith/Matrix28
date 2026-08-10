@@ -2,59 +2,64 @@ package com.l1khith.matrix28
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
-import com.l1khith.matrix28.ui.FixedCalendarApp
-import com.l1khith.matrix28.viewmodel.FixedCalendarViewModel
+import com.google.android.gms.ads.MobileAds
+import com.l1khith.matrix28.ui.theme.MatrixTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
-    private var deepLinkId by mutableStateOf<String?>(null)
+    private var deepLinkIdState by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Fix Bug #3: Use applicationContext to avoid memory leaks
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                com.google.android.gms.ads.MobileAds.initialize(applicationContext)
+                MobileAds.initialize(applicationContext) { status ->
+                    Log.d("MainActivity", "AdMob initialized: ${status.adapterStatusMap}")
+                }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("MainActivity", "AdMob initialization error", e)
             }
         }
 
         enableEdgeToEdge()
 
-        // Fix Bug #4: Extract initial deep link task ID
-        deepLinkId = intent?.getStringExtra("selected_task_id")
+        deepLinkIdState = intent?.getStringExtra("selected_task_id")
 
         setContent {
-            App(initialTaskId = deepLinkId)
+            val deepLinkId = rememberSaveable { mutableStateOf(deepLinkIdState) }
+            App(
+                initialTaskId = deepLinkId.value,
+                onExitApp = { finish() }
+            )
         }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        deepLinkId = intent.getStringExtra("selected_task_id")
+        deepLinkIdState = intent.getStringExtra("selected_task_id")
     }
 }
 
-// Fix Bug #5: Preview UI directly to avoid ViewModelStoreOwner missing crash in previews
 @Preview
 @Composable
 fun AppAndroidPreview() {
-    MaterialTheme {
-        FixedCalendarApp(viewModel = FixedCalendarViewModel())
+    MatrixTheme {
+        Text("Matrix 28 Preview")
     }
 }
