@@ -379,95 +379,13 @@ fun CreateTaskScreen(
                     border = BorderStroke(1.dp, MatrixColors.OutlineVariant),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Category",
-                            color = MatrixColors.TextSecondary,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium
+                    Box(modifier = Modifier.padding(16.dp)) {
+                        CategorySelectionUI(
+                            selectedCategory = customCategoryName,
+                            onCategorySelected = { cat -> customCategoryName = cat },
+                            isProActive = isProActive,
+                            onOpenPaywall = onOpenPaywall
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            val categories = listOf(
-                                Triple(2, "Work", MatrixColors.Secondary),
-                                Triple(1, "Personal", MatrixColors.Tertiary),
-                                Triple(3, "Health", MatrixColors.Error)
-                            )
-                            for ((pVal, label, color) in categories) {
-                                val isSelected = priority == pVal
-                                Card(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clickable { priority = pVal },
-                                    shape = MatrixShapes.Xl,
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = if (isSelected) color.copy(alpha = 0.2f) else Color.Transparent
-                                    ),
-                                    border = BorderStroke(
-                                        width = 1.dp,
-                                        color = if (isSelected) color else MatrixColors.OutlineVariant
-                                    )
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Center
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(6.dp)
-                                                .clip(CircleShape)
-                                                .background(color)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = label,
-                                            color = if (isSelected) color else MatrixColors.TextHeader,
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    }
-                                }
-                            }
-
-                            Card(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable {
-                                        if (isProActive) {
-                                            showAddCategoryDialog = true
-                                        } else {
-                                            onOpenPaywall()
-                                        }
-                                    },
-                                shape = MatrixShapes.Xl,
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (customCategoryName != null) MatrixColors.PrimaryContainer else Color.Transparent
-                                ),
-                                border = BorderStroke(
-                                    1.dp,
-                                    if (customCategoryName != null) MatrixColors.Primary else MatrixColors.OutlineVariant
-                                )
-                            ) {
-
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    Text(
-                                        text = customCategoryName ?: "+ New",
-                                        color = if (customCategoryName != null) MatrixColors.OnPrimaryContainer else MatrixColors.TextSecondary,
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -529,44 +447,5 @@ fun CreateTaskScreen(
             showTimePicker = false
         }
     )
-
-    if (showAddCategoryDialog) {
-        AlertDialog(
-            onDismissRequest = { showAddCategoryDialog = false },
-            title = { Text("New Category", color = MatrixColors.TextHeader, fontWeight = FontWeight.Bold) },
-            text = {
-                OutlinedTextField(
-                    value = newCategoryName,
-                    onValueChange = { newCategoryName = it },
-                    placeholder = { Text("Category Name (e.g. Study)", color = MatrixColors.TextSecondary.copy(alpha = 0.5f)) },
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = MatrixColors.TextHeader,
-                        unfocusedTextColor = MatrixColors.TextHeader,
-                        focusedBorderColor = MatrixColors.Primary,
-                        unfocusedBorderColor = MatrixColors.OutlineVariant
-                    )
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (newCategoryName.trim().isNotEmpty()) {
-                            customCategoryName = newCategoryName.trim()
-                            showAddCategoryDialog = false
-                        }
-                    }
-                ) {
-                    Text("Add", color = MatrixColors.Primary, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showAddCategoryDialog = false }) {
-                    Text("Cancel", color = MatrixColors.TextSecondary)
-                }
-            },
-            containerColor = MatrixColors.SurfaceContainerLow
-        )
-    }
 }
 
