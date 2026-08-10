@@ -99,6 +99,13 @@ actual class TaskDatabase actual constructor() {
 
     private val helper: DbHelper by lazy { DbHelper(AppContext.get()) }
 
+    private fun notifyWidgetUpdate() {
+        try {
+            com.l1khith.matrix28.widget.WidgetUpdater.updateWidget()
+        } catch (_: Exception) {}
+    }
+
+
     actual fun insertTask(task: AppTask): Boolean {
         val db = helper.writableDatabase
         val values = ContentValues().apply {
@@ -115,7 +122,11 @@ actual class TaskDatabase actual constructor() {
             put(COLUMN_IS_GENERATED, task.isGenerated)
         }
         val result = db.insertWithOnConflict(TABLE_TASKS, null, values, SQLiteDatabase.CONFLICT_IGNORE)
-        return result != -1L
+        if (result != -1L) {
+            notifyWidgetUpdate()
+            return true
+        }
+        return false
     }
 
 
@@ -134,14 +145,23 @@ actual class TaskDatabase actual constructor() {
             put(COLUMN_IS_GENERATED, task.isGenerated)
         }
         val result = db.update(TABLE_TASKS, values, "$COLUMN_ID = ?", arrayOf(task.id))
-        return result > 0
+        if (result > 0) {
+            notifyWidgetUpdate()
+            return true
+        }
+        return false
     }
 
     actual fun deleteTask(id: String): Boolean {
         val db = helper.writableDatabase
         val result = db.delete(TABLE_TASKS, "$COLUMN_ID = ?", arrayOf(id))
-        return result > 0
+        if (result > 0) {
+            notifyWidgetUpdate()
+            return true
+        }
+        return false
     }
+
 
     actual fun getTasksForDate(dateStr: String): List<AppTask> {
         val list = mutableListOf<AppTask>()
@@ -297,9 +317,10 @@ actual class TaskDatabase actual constructor() {
         } finally {
             db.endTransaction()
         }
-
+        notifyWidgetUpdate()
         return 0
     }
+
 
 
     actual fun insertGeneratedTask(task: AppTask): Boolean {

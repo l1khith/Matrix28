@@ -16,13 +16,14 @@ plugins {
 dependencies {
     implementation(project(":shared"))
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.compose.material3)
     implementation(libs.compose.uiToolingPreview)
     implementation(libs.play.services.ads)
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)
     debugImplementation(libs.compose.uiTooling)
 }
+
 
 
 android {
@@ -47,7 +48,6 @@ android {
                 keyAlias = System.getenv("KEY_ALIAS") ?: ""
                 keyPassword = System.getenv("KEY_PASSWORD") ?: ""
             } else {
-                // Default fallback to debug signing config if environment variables are not set
                 val debugConfig = signingConfigs.getByName("debug")
                 storeFile = debugConfig.storeFile
                 storePassword = debugConfig.storePassword
@@ -107,6 +107,8 @@ android {
         jvmTarget = "11"
         freeCompilerArgs += listOf("-Xskip-metadata-version-check")
     }
+
+
 
 
     buildFeatures {

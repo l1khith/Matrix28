@@ -49,7 +49,16 @@ import com.l1khith.matrix28.ui.theme.MatrixShapes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FixedCalendarApp(viewModel: FixedCalendarViewModel) {
+fun FixedCalendarApp(
+    viewModel: FixedCalendarViewModel,
+    initialTaskId: String? = null
+) {
+    LaunchedEffect(initialTaskId) {
+        if (initialTaskId != null) {
+            viewModel.onTaskSelected(initialTaskId)
+        }
+    }
+
     val selectedDate by viewModel.selectedDate.collectAsState()
     val tasks by viewModel.tasksForSelectedDay.collectAsState()
     val activeDates by viewModel.datesWithActiveTasks.collectAsState()

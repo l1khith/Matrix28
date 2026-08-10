@@ -9,8 +9,14 @@ class MatrixApplication : Application() {
         super.onCreate()
         AppContext.init(this)
 
-        // Initialize RevenueCat SDK with API key from BuildConfig (loaded from secrets.properties)
         SubscriptionManager.configure(BuildConfig.REVENUECAT_API_KEY)
+
+        // Register WidgetUpdater callback for Glance AppWidget real-time updates
+        com.l1khith.matrix28.widget.WidgetUpdater.registerUpdateCallback {
+            com.l1khith.matrix28.widget.TodayTaskWidget.updateWidget(this)
+        }
     }
 }
+
+
 

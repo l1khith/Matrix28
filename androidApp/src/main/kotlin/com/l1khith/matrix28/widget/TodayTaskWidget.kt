@@ -1,6 +1,7 @@
 package com.l1khith.matrix28.widget
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -15,6 +16,9 @@ import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.updateAll
+import kotlinx.coroutines.launch
+
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
@@ -40,12 +44,30 @@ import com.l1khith.matrix28.utils.currentTimeMillis
 
 class TodayTaskWidget : GlanceAppWidget() {
 
+    companion object {
+        fun updateWidget(context: Context) {
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                try {
+                    TodayTaskWidget().updateAll(context)
+                } catch (e: Exception) {
+                    Log.e("TodayTaskWidget", "Failed to update widget instances", e)
+                }
+            }
+        }
+    }
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+
         val db = TaskDatabase()
         val today = FixedCalendarHelper.fromTimestamp(currentTimeMillis())
         val todayStr = today.toString()
         val monthName = FixedCalendarHelper.getMonthName(today.month)
-        val todayTasks = try { db.getTasksForDate(todayStr) } catch (_: Exception) { emptyList() }
+        val todayTasks = try {
+            db.getTasksForDate(todayStr)
+        } catch (e: Exception) {
+            Log.e("TodayTaskWidget", "Error fetching widget tasks for date $todayStr", e)
+            emptyList()
+        }
 
         provideContent {
             GlanceWidgetContent(
@@ -163,6 +185,7 @@ class TodayTaskWidget : GlanceAppWidget() {
                         )
                         Text(
                             text = task.title,
+                            maxLines = 1,
                             style = TextStyle(
                                 color = ColorProvider(if (task.completed) Color(0xFF64748B) else Color(0xFFCBD5E1)),
                                 fontSize = 13.sp,
@@ -175,6 +198,7 @@ class TodayTaskWidget : GlanceAppWidget() {
         }
     }
 }
+
 
 class TodayTaskWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = TodayTaskWidget()

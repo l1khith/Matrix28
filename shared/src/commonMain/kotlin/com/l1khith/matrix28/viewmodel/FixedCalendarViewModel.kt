@@ -64,6 +64,23 @@ class FixedCalendarViewModel : ViewModel() {
         loadTasksForSelectedDay(fixedDate)
     }
 
+    fun onTaskSelected(taskId: String) {
+        viewModelScope.launch(Dispatchers.Default) {
+            val all = db.getAllTasks()
+            val task = all.find { it.id == taskId }
+            if (task != null) {
+                val fixedDate = FixedCalendarHelper.parseDateStr(task.associatedDate)
+                if (fixedDate != null) {
+                    withContext(Dispatchers.Main.immediate) {
+                        selectDate(fixedDate)
+                    }
+                }
+            }
+        }
+    }
+
+
+
     fun loadState(fixedDate: FixedDate = _selectedDate.value) {
         loadTasksForSelectedDay(fixedDate)
         loadDatesWithActiveTasks()

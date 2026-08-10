@@ -62,5 +62,8 @@ class AlarmReceiver : BroadcastReceiver() {
         }
 
         notificationManager.notify(notificationId, builder.build())
+        com.l1khith.matrix28.widget.WidgetUpdater.updateWidget()
     }
 }
+
+

@@ -46,7 +46,11 @@ class BootReceiver : BroadcastReceiver() {
                             }
                         }
                     }
+
+                    com.l1khith.matrix28.widget.WidgetUpdater.updateWidget()
                 }
+
+
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
