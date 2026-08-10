@@ -191,11 +191,12 @@ object FixedCalendarHelper {
      * Gets the weekday name for a FixedDate. Leap Day and Year Day have no weekday designations.
      */
     fun getDayOfWeek(fixedDate: FixedDate): String {
-        if (fixedDate.isLeapDay) return "Leap Day"
-        if (fixedDate.isYearDay) return "Year Day"
+        if (fixedDate.isLeapDay || (fixedDate.month == 6 && fixedDate.day == 29)) return "Leap Day (Leave)"
+        if (fixedDate.isYearDay || (fixedDate.month == 13 && fixedDate.day == 29)) return "Sol Day (Leave Day)"
         val index = (fixedDate.day - 1) % 7
         return WEEKDAYS[index]
     }
+
 
     /**
      * Gets the weekday index for a FixedDate (0 = Sunday, 6 = Saturday).

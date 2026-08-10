@@ -807,7 +807,7 @@ fun CalendarMatrix(
                 val hasTasks = activeDates.contains(leapDay.toString())
 
                 SpecialDayCard(
-                    label = "Leap Day (June 29)",
+                    label = "Leap Day — Leave Day (June 29)",
                     isSelected = isLeapSelected,
                     isToday = isLeapToday,
                     hasTasks = hasTasks,
@@ -826,7 +826,7 @@ fun CalendarMatrix(
                 val hasTasks = activeDates.contains(yearDay.toString())
 
                 SpecialDayCard(
-                    label = "Year Day (December 29)",
+                    label = "Sol Day — Leave Day (December 29)",
                     isSelected = isYearSelected,
                     isToday = isYearToday,
                     hasTasks = hasTasks,
@@ -843,7 +843,6 @@ fun CalendarMatrix(
 
 @Composable
 fun SpecialDayCard(
-
     label: String,
     isSelected: Boolean,
     isToday: Boolean,
@@ -873,12 +872,28 @@ fun SpecialDayCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "⭐ $label",
-                color = if (isSelected) Color.White else textColor,
-                fontWeight = FontWeight.Bold,
-                fontSize = 13.sp
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "🌟 $label",
+                    color = if (isSelected) Color.White else textColor,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = if (isSelected) Color.White.copy(alpha = 0.2f) else Color(0xFF1E293B)
+                ) {
+                    Text(
+                        text = "🌴 LEAVE DAY",
+                        color = if (isSelected) Color.White else Color(0xFF60A5FA),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
             if (hasTasks) {
                 Box(
                     modifier = Modifier
@@ -890,6 +905,7 @@ fun SpecialDayCard(
         }
     }
 }
+
 
 @Composable
 fun AgendaList(

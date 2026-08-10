@@ -8,8 +8,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
-import androidx.glance.Image
-import androidx.glance.ImageProvider
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
@@ -17,8 +15,6 @@ import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.updateAll
-import kotlinx.coroutines.launch
-
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
@@ -29,24 +25,25 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
-import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextDecoration
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.l1khith.matrix28.MainActivity
-import com.l1khith.matrix28.R
 import com.l1khith.matrix28.data.AppTask
 import com.l1khith.matrix28.data.TaskDatabase
 import com.l1khith.matrix28.utils.FixedCalendarHelper
 import com.l1khith.matrix28.utils.currentTimeMillis
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class TodayTaskWidget : GlanceAppWidget() {
 
     companion object {
         fun updateWidget(context: Context) {
-            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 try {
                     TodayTaskWidget().updateAll(context)
                 } catch (e: Exception) {
@@ -57,11 +54,11 @@ class TodayTaskWidget : GlanceAppWidget() {
     }
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-
         val db = TaskDatabase()
         val today = FixedCalendarHelper.fromTimestamp(currentTimeMillis())
         val todayStr = today.toString()
         val monthName = FixedCalendarHelper.getMonthName(today.month)
+        val dayOfWeek = FixedCalendarHelper.getDayOfWeek(today)
         val todayTasks = try {
             db.getTasksForDate(todayStr)
         } catch (e: Exception) {
@@ -69,10 +66,16 @@ class TodayTaskWidget : GlanceAppWidget() {
             emptyList()
         }
 
+        val completedCount = todayTasks.count { it.completed }
+        val totalCount = todayTasks.size
+
         provideContent {
             GlanceWidgetContent(
-                dateText = "$monthName ${today.day}, ${today.year}",
-                cycleBadgeText = "Month ${today.month} • Day ${today.day} of 28",
+                dateTitle = if (today.isYearDay) "Sol Day 🌴" else if (today.isLeapDay) "Leap Day 🌟" else "${monthName.take(3)} ${today.day}",
+                subtitleText = "$dayOfWeek • Month ${today.month}",
+                cycleInfo = if (today.isYearDay) "Sol Leave Day" else "Day ${today.day} of 28",
+                completedCount = completedCount,
+                totalCount = totalCount,
                 tasks = todayTasks
             )
         }
@@ -80,105 +83,95 @@ class TodayTaskWidget : GlanceAppWidget() {
 
     @Composable
     private fun GlanceWidgetContent(
-        dateText: String,
-        cycleBadgeText: String,
+        dateTitle: String,
+        subtitleText: String,
+        cycleInfo: String,
+        completedCount: Int,
+        totalCount: Int,
         tasks: List<AppTask>
     ) {
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(Color(0xFF0F172A))
-                .cornerRadius(16.dp)
+                .background(Color(0xFF18181B))
+                .cornerRadius(12.dp)
                 .padding(14.dp)
                 .clickable(actionStartActivity<MainActivity>())
         ) {
-            // HEADER ROW: LOGO & APP TITLE & BADGE
+            // HEADER ROW: DATE ACCENT & CYCLE BADGE
             Row(
                 modifier = GlanceModifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Image(
-                        provider = ImageProvider(R.drawable.ic_matrix28_logo),
-                        contentDescription = "Matrix 28 Logo",
-                        modifier = GlanceModifier.width(20.dp).height(20.dp)
-                    )
-
-                    Spacer(modifier = GlanceModifier.width(6.dp))
+                Column(modifier = GlanceModifier.defaultWeight()) {
                     Text(
-                        text = "MATRIX 28",
+                        text = dateTitle.uppercase(),
                         style = TextStyle(
-                            color = ColorProvider(Color(0xFF3B82F6)),
-                            fontSize = 12.sp,
+                            color = ColorProvider(Color(0xFFADC6FF)),
+                            fontSize = 20.sp,
                             fontWeight = FontWeight.Bold
+                        )
+                    )
+                    Spacer(modifier = GlanceModifier.height(2.dp))
+                    Text(
+                        text = subtitleText,
+                        style = TextStyle(
+                            color = ColorProvider(Color(0xFFE4E1E5)),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
                         )
                     )
                 }
 
-                Spacer(modifier = GlanceModifier.defaultWeight())
-
+                // BADGE & STATS
                 Box(
                     modifier = GlanceModifier
-                        .background(Color(0xFF1E293B))
-                        .cornerRadius(12.dp)
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                        .background(Color(0xFF27272A))
+                        .cornerRadius(10.dp)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = cycleBadgeText,
+                        text = if (totalCount > 0) "$completedCount/$totalCount • $cycleInfo" else cycleInfo,
                         style = TextStyle(
-                            color = ColorProvider(Color(0xFF60A5FA)),
-                            fontSize = 10.sp,
+                            color = ColorProvider(Color(0xFF4D8EFF)),
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
                     )
                 }
             }
 
-            Spacer(modifier = GlanceModifier.height(8.dp))
+            Spacer(modifier = GlanceModifier.height(10.dp))
 
-            // TODAY'S DATE
-            Text(
-                text = dateText,
-                style = TextStyle(
-                    color = ColorProvider(Color(0xFFF8FAFC)),
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-            Spacer(modifier = GlanceModifier.height(8.dp))
-
-            // DIVIDER
+            // DIVIDER matching SVG stroke #424754
             Box(
                 modifier = GlanceModifier
                     .fillMaxWidth()
                     .height(1.dp)
-                    .background(Color(0xFF334155))
+                    .background(Color(0xFF424754))
             ) {}
 
-            Spacer(modifier = GlanceModifier.height(8.dp))
+            Spacer(modifier = GlanceModifier.height(10.dp))
 
-            // TODAY'S REAL TASKS LIST
+            // TASKS SECTION
             if (tasks.isEmpty()) {
                 Text(
-                    text = "No tasks for today. Tap to add!",
+                    text = "No tasks scheduled for today. Tap to open Matrix 28",
                     style = TextStyle(
-                        color = ColorProvider(Color(0xFF94A3B8)),
-                        fontSize = 13.sp
+                        color = ColorProvider(Color(0xFFC2C6D6)),
+                        fontSize = 12.sp
                     )
                 )
             } else {
-                for (task in tasks.take(5)) {
+                for (task in tasks.take(4)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = GlanceModifier.padding(vertical = 2.dp)
+                        modifier = GlanceModifier.padding(vertical = 3.dp)
                     ) {
                         Text(
                             text = if (task.completed) "✓ " else "• ",
                             style = TextStyle(
-                                color = ColorProvider(if (task.completed) Color(0xFF10B981) else Color(0xFF60A5FA)),
+                                color = ColorProvider(if (task.completed) Color(0xFF4D8EFF) else Color(0xFFADC6FF)),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -187,7 +180,7 @@ class TodayTaskWidget : GlanceAppWidget() {
                             text = task.title,
                             maxLines = 1,
                             style = TextStyle(
-                                color = ColorProvider(if (task.completed) Color(0xFF64748B) else Color(0xFFCBD5E1)),
+                                color = ColorProvider(if (task.completed) Color(0xFFC2C6D6) else Color(0xFFE4E1E5)),
                                 fontSize = 13.sp,
                                 textDecoration = if (task.completed) TextDecoration.LineThrough else TextDecoration.None
                             )
@@ -198,7 +191,6 @@ class TodayTaskWidget : GlanceAppWidget() {
         }
     }
 }
-
 
 class TodayTaskWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = TodayTaskWidget()
