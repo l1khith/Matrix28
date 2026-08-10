@@ -1,7 +1,6 @@
 package com.l1khith.matrix28.ui
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -10,7 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -18,14 +16,13 @@ import androidx.compose.ui.window.Dialog
 import com.l1khith.matrix28.billing.SubscriptionManager
 import com.l1khith.matrix28.ui.theme.MatrixColors
 import com.l1khith.matrix28.ui.theme.MatrixShapes
-import com.revenuecat.purchases.kmp.ui.revenuecatui.CustomerCenter
 
 @Composable
 fun CustomerCenterDialog(
     onDismiss: () -> Unit
 ) {
-    val customerInfo by SubscriptionManager.customerInfo.collectAsState()
     val isProActive by SubscriptionManager.isProActive.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -56,7 +53,7 @@ fun CustomerCenterDialog(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Customer Center",
+                            text = "Customer Center (Testing)",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = MatrixColors.TextHeader
@@ -74,7 +71,6 @@ fun CustomerCenterDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                val appUserId = customerInfo?.originalAppUserId ?: "Anonymous"
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MatrixColors.SurfaceContainer),
                     border = BorderStroke(1.dp, MatrixColors.OutlineVariant),
@@ -90,14 +86,14 @@ fun CustomerCenterDialog(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = if (isProActive) "PRO SUBSCRIBER" else "FREE USER",
+                            text = if (isProActive) "PRO SUBSCRIBER (ACTIVE)" else "FREE USER",
                             color = if (isProActive) MatrixColors.Tertiary else MatrixColors.TextHeader,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "App User ID: $appUserId",
+                            text = "Testing Track Mode • Local State Storage",
                             color = MatrixColors.TextSecondary,
                             fontSize = 11.sp
                         )
@@ -106,27 +102,22 @@ fun CustomerCenterDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                CustomerCenter(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp),
-                    onDismiss = onDismiss
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
                 Button(
                     onClick = {
-                        SubscriptionManager.restorePurchases()
+                        SubscriptionManager.toggleProMode(coroutineScope)
+                        onDismiss()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MatrixColors.PrimaryContainer),
                     shape = MatrixShapes.Xl,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Restore Purchases", color = MatrixColors.OnPrimaryContainer, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = if (isProActive) "Switch to Free Tier" else "Switch to Pro Mode",
+                        color = MatrixColors.OnPrimaryContainer,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
     }
 }
-

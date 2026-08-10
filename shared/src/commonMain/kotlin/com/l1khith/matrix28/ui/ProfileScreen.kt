@@ -36,6 +36,7 @@ fun ProfileScreen(
     onOpenMonthView: () -> Unit
 ) {
     val isProActive by SubscriptionManager.isProActive.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
     val currentTheme by ThemeManager.currentTheme.collectAsState()
     var showThemeDialog by remember { mutableStateOf(false) }
 
@@ -134,10 +135,55 @@ fun ProfileScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column {
+                        // Pro Mode Testing Toggle
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = AppIcons.Subscription,
+                                    contentDescription = "Pro Mode",
+                                    tint = MatrixColors.Secondary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = "Pro Mode (Testing)",
+                                        color = MatrixColors.TextHeader,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp
+                                    )
+                                    Text(
+                                        text = if (isProActive) "Unlocked • Ad-Free" else "Free Tier • Test Ads Shown",
+                                        color = MatrixColors.TextSecondary,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
+
+                            Switch(
+                                checked = isProActive,
+                                onCheckedChange = {
+                                    SubscriptionManager.toggleProMode(coroutineScope)
+                                },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = MatrixColors.Primary,
+                                    checkedTrackColor = MatrixColors.PrimaryContainer
+                                )
+                            )
+                        }
+
+                        HorizontalDivider(color = MatrixColors.OutlineVariant, thickness = 1.dp)
+
                         ProfileValueRow(
                             icon = AppIcons.Subscription,
-                            title = "Subscription",
-                            value = if (isProActive) "Pro" else "Free",
+                            title = "Subscription Status",
+                            value = if (isProActive) "Pro (Active)" else "Free Tier",
                             onClick = onOpenSubscription
                         )
 
