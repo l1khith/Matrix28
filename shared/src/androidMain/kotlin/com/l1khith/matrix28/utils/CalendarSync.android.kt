@@ -20,8 +20,9 @@ actual fun importSystemCalendarEvents(): List<AppTask> {
         }
 
         val now = currentTimeMillis()
-        val startRange = now // From today onwards (no old past events)
-        val endRange = now + (365L * 24 * 60 * 60 * 1000L) // 365 days future
+        // Defined import range limits: Past 30 days to Next 365 days
+        val startRange = now - (30L * 24 * 60 * 60 * 1000L)
+        val endRange = now + (365L * 24 * 60 * 60 * 1000L)
 
         val builder = CalendarContract.Instances.CONTENT_URI.buildUpon()
         ContentUris.appendId(builder, startRange)
@@ -46,14 +47,12 @@ actual fun importSystemCalendarEvents(): List<AppTask> {
         val todayStr = FixedCalendarHelper.fromTimestamp(now).toString()
 
         cursor?.use { c ->
-            val idIndex = c.getColumnIndexOrThrow(CalendarContract.Instances.EVENT_ID)
             val titleIndex = c.getColumnIndexOrThrow(CalendarContract.Instances.TITLE)
             val descIndex = c.getColumnIndexOrThrow(CalendarContract.Instances.DESCRIPTION)
             val beginIndex = c.getColumnIndexOrThrow(CalendarContract.Instances.BEGIN)
             val allDayIndex = c.getColumnIndexOrThrow(CalendarContract.Instances.ALL_DAY)
 
             while (c.moveToNext()) {
-                val eventId = c.getString(idIndex)
                 val title = c.getString(titleIndex) ?: "System Event"
                 val description = c.getString(descIndex)
                 val startMillis = c.getLong(beginIndex)
@@ -66,8 +65,6 @@ actual fun importSystemCalendarEvents(): List<AppTask> {
                     continue
                 }
 
-
-                val isReminder = 0
                 val reminderTime = if (isAllDay) {
                     null
                 } else {
@@ -77,13 +74,18 @@ actual fun importSystemCalendarEvents(): List<AppTask> {
                     "$h:$m"
                 }
 
+                // Deterministic Unique Task ID generation based on normalized title and date
+                val cleanTitle = title.trim().lowercase()
+                val hashId = (cleanTitle + "_" + associatedDate).hashCode().let { if (it < 0) -it else it }
+                val deterministicId = "sys_${hashId}"
+
                 tasks.add(
                     AppTask(
-                        id = "sys_${eventId}_${startMillis}",
-                        title = title,
+                        id = deterministicId,
+                        title = title.trim(),
                         description = description,
                         associatedDate = associatedDate,
-                        isReminder = isReminder,
+                        isReminder = 0,
                         reminderTime = reminderTime,
                         utcTimestamp = null,
                         isCompleted = 0,
@@ -95,5 +97,6 @@ actual fun importSystemCalendarEvents(): List<AppTask> {
     } catch (e: Exception) {
         e.printStackTrace()
     }
-    return tasks
+    // Deduplicate in memory before returning
+    return tasks.distinctBy { "${it.title.trim().lowercase()}_${it.associatedDate}" }
 }

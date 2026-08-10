@@ -105,9 +105,44 @@ actual class TaskDatabase actual constructor() {
         } catch (_: Exception) {}
     }
 
+    init {
+        purgeDuplicateTasks()
+    }
+
+    fun purgeDuplicateTasks() {
+        try {
+            val db = helper.writableDatabase
+            db.execSQL(
+                """
+                DELETE FROM $TABLE_TASKS 
+                WHERE rowid NOT IN (
+                    SELECT MIN(rowid) 
+                    FROM $TABLE_TASKS 
+                    GROUP BY LOWER(TRIM($COLUMN_TITLE)), $COLUMN_ASSOCIATED_DATE
+                )
+                """.trimIndent()
+            )
+        } catch (_: Exception) {}
+    }
 
     actual fun insertTask(task: AppTask): Boolean {
         val db = helper.writableDatabase
+
+        if (task.id.startsWith("sys_")) {
+            val existingCursor = db.query(
+                TABLE_TASKS,
+                arrayOf(COLUMN_ID),
+                "LOWER(TRIM($COLUMN_TITLE)) = LOWER(TRIM(?)) AND $COLUMN_ASSOCIATED_DATE = ?",
+                arrayOf(task.title, task.associatedDate),
+                null, null, null
+            )
+            existingCursor?.use { c ->
+                if (c.moveToFirst()) {
+                    return false
+                }
+            }
+        }
+
         val values = ContentValues().apply {
             put(COLUMN_ID, task.id)
             put(COLUMN_TITLE, task.title)
@@ -121,7 +156,7 @@ actual class TaskDatabase actual constructor() {
             put(COLUMN_RECURRING_PARENT_ID, task.recurringParentId)
             put(COLUMN_IS_GENERATED, task.isGenerated)
         }
-        val result = db.insertWithOnConflict(TABLE_TASKS, null, values, SQLiteDatabase.CONFLICT_IGNORE)
+        val result = db.insertWithOnConflict(TABLE_TASKS, null, values, SQLiteDatabase.CONFLICT_REPLACE)
         if (result != -1L) {
             notifyWidgetUpdate()
             return true
