@@ -1,6 +1,7 @@
 package com.l1khith.matrix28.widget
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -31,7 +32,6 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
-import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextDecoration
@@ -44,6 +44,7 @@ import com.l1khith.matrix28.utils.FixedCalendarHelper
 import com.l1khith.matrix28.utils.currentTimeMillis
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 class ToggleTaskAction : ActionCallback {
@@ -70,10 +71,13 @@ class ToggleTaskAction : ActionCallback {
 class TodayTaskWidget : GlanceAppWidget() {
 
     override val sizeMode: SizeMode = SizeMode.Exact
+    private val db by lazy { TaskDatabase() }
 
     companion object {
+        private val widgetScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
         fun updateWidget(context: Context) {
-            CoroutineScope(Dispatchers.IO).launch {
+            widgetScope.launch {
                 try {
                     TodayTaskWidget().updateAll(context)
                 } catch (e: Exception) {
@@ -84,7 +88,6 @@ class TodayTaskWidget : GlanceAppWidget() {
     }
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val db = TaskDatabase()
         val today = FixedCalendarHelper.fromTimestamp(currentTimeMillis())
         val todayStr = today.toString()
         val monthName = FixedCalendarHelper.getMonthName(today.month)
@@ -101,6 +104,7 @@ class TodayTaskWidget : GlanceAppWidget() {
 
         provideContent {
             GlanceWidgetContent(
+                context = context,
                 dateTitle = if (today.isYearDay) "Sol Day 🌴" else if (today.isLeapDay) "Leap Day 🌟" else "${monthName.take(3)} ${today.day}",
                 subtitleText = "$dayOfWeek • Month ${today.month}",
                 cycleInfo = if (today.isYearDay) "Sol Leave Day" else "Day ${today.day} of 28",
@@ -113,6 +117,7 @@ class TodayTaskWidget : GlanceAppWidget() {
 
     @Composable
     private fun GlanceWidgetContent(
+        context: Context,
         dateTitle: String,
         subtitleText: String,
         cycleInfo: String,
@@ -124,13 +129,15 @@ class TodayTaskWidget : GlanceAppWidget() {
         val isCompact = size.height < 120.dp || size.width < 220.dp
         val maxTaskDisplay = if (size.height > 200.dp) 6 else if (isCompact) 2 else 4
 
+        val componentName = android.content.ComponentName(context, MainActivity::class.java)
+
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(Color(0xFF18181B))
                 .cornerRadius(12.dp)
                 .padding(if (isCompact) 8.dp else 14.dp)
-                .clickable(actionStartActivity<MainActivity>())
+                .clickable(actionStartActivity(componentName))
         ) {
             // HEADER ROW: DATE ACCENT & CYCLE BADGE
             Row(
