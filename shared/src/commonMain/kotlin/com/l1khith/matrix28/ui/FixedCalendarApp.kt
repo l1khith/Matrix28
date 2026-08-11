@@ -75,6 +75,7 @@ fun FixedCalendarApp(
     var showRecurringManager by remember { mutableStateOf(false) }
     var showSyncDialog by remember { mutableStateOf(false) }
     var showIcsImportDialog by remember { mutableStateOf(false) }
+    var showExportTasksDialog by remember { mutableStateOf(false) }
     var showPaywallDialog by remember { mutableStateOf(false) }
     var showCustomerCenterDialog by remember { mutableStateOf(false) }
     var showExitDialog by remember { mutableStateOf(false) }
@@ -576,7 +577,7 @@ fun FixedCalendarApp(
     }
 
     if (showSyncDialog) {
-        SyncDialog(
+        SyncOptionsBottomSheet(
             onDismiss = { showSyncDialog = false },
             onSyncSystem = {
                 showSyncDialog = false
@@ -586,6 +587,22 @@ fun FixedCalendarApp(
             onImportIcs = {
                 showSyncDialog = false
                 showIcsImportDialog = true
+            },
+            onExportTasks = {
+                showSyncDialog = false
+                showExportTasksDialog = true
+            },
+            isProActive = isProActive,
+            onOpenPaywall = { showPaywallDialog = true }
+        )
+    }
+
+    if (showExportTasksDialog) {
+        ExportTasksDialog(
+            onDismiss = { showExportTasksDialog = false },
+            onExportFormat = { format ->
+                val content = viewModel.exportDataString(format)
+                com.l1khith.matrix28.utils.showPlatformToast("Exported ${format.uppercase()} data (${content.length} bytes)")
             }
         )
     }

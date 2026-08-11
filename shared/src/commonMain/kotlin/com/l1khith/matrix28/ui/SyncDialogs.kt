@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.l1khith.matrix28.ui.theme.MatrixColors
 
 @Composable
 fun SyncDialog(
@@ -268,4 +269,58 @@ fun IcsImportDialog(
             }
         }
     }
+}
+
+@Composable
+fun ExportTasksDialog(
+    onDismiss: () -> Unit,
+    onExportFormat: (String) -> Unit
+) {
+    var selectedFormat by remember { mutableStateOf("ics") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Export Matrix Tasks", color = MatrixColors.TextHeader, fontWeight = FontWeight.Bold) },
+        text = {
+            Column {
+                Text("Select export file format:", color = MatrixColors.TextSecondary, fontSize = 13.sp)
+                Spacer(modifier = Modifier.height(12.dp))
+
+                listOf("ics" to "iCalendar (.ics)", "csv" to "Spreadsheet (.csv)", "json" to "Data Object (.json)").forEach { (format, label) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { selectedFormat = format }
+                            .padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = selectedFormat == format,
+                            onClick = { selectedFormat = format },
+                            colors = RadioButtonDefaults.colors(selectedColor = MatrixColors.Primary)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(label, color = MatrixColors.TextHeader, fontSize = 14.sp)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onExportFormat(selectedFormat)
+                    onDismiss()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = MatrixColors.Primary)
+            ) {
+                Text("Export", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = MatrixColors.TextSecondary)
+            }
+        },
+        containerColor = MatrixColors.SurfaceContainerLow
+    )
 }
