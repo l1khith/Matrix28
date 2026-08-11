@@ -36,14 +36,26 @@ actual fun scheduleTaskAlarm(task: AppTask) {
         )
 
         val canScheduleExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            alarmManager.canScheduleExactAlarms()
+            try {
+                alarmManager.canScheduleExactAlarms()
+            } catch (_: Exception) {
+                false
+            }
         } else {
             true
         }
 
         if (canScheduleExact) {
-            val alarmClockInfo = AlarmManager.AlarmClockInfo(task.utcTimestamp, pendingIntent)
-            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+            try {
+                val alarmClockInfo = AlarmManager.AlarmClockInfo(task.utcTimestamp, pendingIntent)
+                alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+            } catch (_: SecurityException) {
+                alarmManager.setAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    task.utcTimestamp,
+                    pendingIntent
+                )
+            }
         } else {
             alarmManager.setAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
@@ -82,7 +94,7 @@ actual fun scheduleMidnightRollover() {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, BootReceiver::class.java).apply {
             action = "com.l1khith.matrix28.ACTION_MIDNIGHT_ROLLOVER"
-            setPackage(context.packageName) // Restrict to package (Bug #24)
+            setPackage(context.packageName)
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
@@ -103,17 +115,29 @@ actual fun scheduleMidnightRollover() {
 
         val triggerTime = calendar.timeInMillis
         val canScheduleExact = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            alarmManager.canScheduleExactAlarms()
+            try {
+                alarmManager.canScheduleExactAlarms()
+            } catch (_: Exception) {
+                false
+            }
         } else {
             true
         }
 
         if (canScheduleExact) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                triggerTime,
-                pendingIntent
-            )
+            try {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
+            } catch (_: SecurityException) {
+                alarmManager.setAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
+            }
         } else {
             alarmManager.setAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,

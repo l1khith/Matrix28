@@ -221,8 +221,19 @@ class FixedCalendarViewModel : ViewModel() {
         val targetDateStr = _selectedDate.value.toString()
         val targetDate = _selectedDate.value
         viewModelScope.launch(Dispatchers.Default) {
+            val recurringId = id ?: Uuid.random().toString()
+
+            if (id != null) {
+                // Cancel alarms for previous instances and clean up incomplete generated tasks
+                val existingTasks = db.getAllTasks().filter { it.recurringParentId == id && !it.completed }
+                for (t in existingTasks) {
+                    com.l1khith.matrix28.utils.cancelTaskAlarm(t)
+                }
+                db.deleteIncompleteGeneratedTasks(id)
+            }
+
             val task = RecurringTask(
-                id = id ?: Uuid.random().toString(),
+                id = recurringId,
                 title = title,
                 description = description?.ifEmpty { null },
                 recurrenceType = recurrenceType,
@@ -235,7 +246,7 @@ class FixedCalendarViewModel : ViewModel() {
                 reminderTime = reminderTime?.ifEmpty { null }
             )
             val success = db.insertRecurringTask(task)
-            if (success) {
+            if (success && isActive) {
                 generateRecurringInstancesForDate(targetDateStr)
             }
             loadState(targetDate)
@@ -245,6 +256,10 @@ class FixedCalendarViewModel : ViewModel() {
     fun deleteRecurringTask(id: String) {
         val targetDate = _selectedDate.value
         viewModelScope.launch(Dispatchers.Default) {
+            val existingTasks = db.getAllTasks().filter { it.recurringParentId == id }
+            for (t in existingTasks) {
+                com.l1khith.matrix28.utils.cancelTaskAlarm(t)
+            }
             db.deleteRecurringTask(id)
             loadState(targetDate)
         }
@@ -258,6 +273,10 @@ class FixedCalendarViewModel : ViewModel() {
             db.insertRecurringTask(updated)
 
             if (!updated.isActive) {
+                val existingTasks = db.getAllTasks().filter { it.recurringParentId == updated.id && !it.completed }
+                for (t in existingTasks) {
+                    com.l1khith.matrix28.utils.cancelTaskAlarm(t)
+                }
                 db.deleteIncompleteGeneratedTasks(updated.id)
             } else {
                 generateRecurringInstancesForDate(targetDateStr)
@@ -287,7 +306,7 @@ class FixedCalendarViewModel : ViewModel() {
                 } else null
 
                 val generatedTask = AppTask(
-                    id = Uuid.random().toString(),
+                    id = "rec_${master.id}_${fixedDateStr}",
                     title = master.title,
                     description = master.description,
                     associatedDate = fixedDateStr,
@@ -366,13 +385,22 @@ class FixedCalendarViewModel : ViewModel() {
 
     fun getIcsExportString(): String {
         val allTasks = db.getAllTasks()
-        return com.l1khith.matrix28.utils.CalendarSyncHelper.exportToIcs(allTasks)
+        return com.l1khith.matrix28.repository.IcsParserRepository.exportToIcs(allTasks)
+    }
+
+    fun exportDataString(format: String): String {
+        val allTasks = db.getAllTasks()
+        return when (format.lowercase()) {
+            "csv" -> com.l1khith.matrix28.repository.IcsParserRepository.exportToCsv(allTasks)
+            "json" -> com.l1khith.matrix28.repository.IcsParserRepository.exportToJson(allTasks)
+            else -> com.l1khith.matrix28.repository.IcsParserRepository.exportToIcs(allTasks)
+        }
     }
 
     fun importFromIcsContent(icsContent: String) {
         val targetDate = _selectedDate.value
         viewModelScope.launch(Dispatchers.Default) {
-            val tasks = com.l1khith.matrix28.utils.CalendarSyncHelper.importFromIcs(icsContent)
+            val tasks = com.l1khith.matrix28.repository.IcsParserRepository.parseIcsContent(icsContent)
             for (task in tasks) {
                 db.insertTask(task)
             }

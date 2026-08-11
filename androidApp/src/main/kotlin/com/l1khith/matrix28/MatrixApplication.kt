@@ -19,6 +19,9 @@ class MatrixApplication : Application() {
 
         SubscriptionManager.configure(BuildConfig.REVENUECAT_API_KEY)
 
+        // Register Notification Channel for task reminders
+        com.l1khith.matrix28.receiver.AlarmReceiver.createNotificationChannel(this)
+
         // Register WidgetUpdater callback safely using single instance
         WidgetUpdater.registerUpdateCallback(widgetCallback)
 
