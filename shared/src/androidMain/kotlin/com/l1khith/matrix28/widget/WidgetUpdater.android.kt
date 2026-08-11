@@ -1,25 +1,22 @@
 package com.l1khith.matrix28.widget
 
-import java.util.concurrent.CopyOnWriteArrayList
+import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 actual object WidgetUpdater {
-    private val callbacks = CopyOnWriteArrayList<() -> Unit>()
-
-    fun registerUpdateCallback(callback: () -> Unit) {
-        if (!callbacks.contains(callback)) {
-            callbacks.add(callback)
-        }
-    }
-
-    fun unregisterUpdateCallback(callback: () -> Unit) {
-        callbacks.remove(callback)
-    }
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     actual fun updateWidget() {
-        try {
-            callbacks.forEach { it.invoke() }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        scope.launch {
+            try {
+                val context = com.l1khith.matrix28.data.AppContext.get()
+                TodayTaskWidget().updateAll(context)
+            } catch (e: Exception) {
+                Log.e("WidgetUpdater", "Failed to update widget", e)
+            }
         }
     }
 }

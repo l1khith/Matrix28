@@ -54,7 +54,6 @@ class ToggleTaskAction : ActionCallback {
         parameters: ActionParameters
     ) {
         val taskId = parameters[TaskIdKey] ?: return
-        val db = TaskDatabase()
         val tasks = db.getAllTasks()
         val task = tasks.find { it.id == taskId }
         if (task != null) {
@@ -65,6 +64,7 @@ class ToggleTaskAction : ActionCallback {
 
     companion object {
         val TaskIdKey = ActionParameters.Key<String>("task_id_key")
+        private val db by lazy { TaskDatabase() }
     }
 }
 
@@ -129,15 +129,19 @@ class TodayTaskWidget : GlanceAppWidget() {
         val isCompact = size.height < 120.dp || size.width < 220.dp
         val maxTaskDisplay = if (size.height > 200.dp) 6 else if (isCompact) 2 else 4
 
-        val componentName = android.content.ComponentName(context, MainActivity::class.java)
-
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(Color(0xFF18181B))
                 .cornerRadius(12.dp)
                 .padding(if (isCompact) 8.dp else 14.dp)
-                .clickable(actionStartActivity(componentName))
+                .clickable(
+                    actionStartActivity(
+                        Intent(context, MainActivity::class.java).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        }
+                    )
+                )
         ) {
             // HEADER ROW: DATE ACCENT & CYCLE BADGE
             Row(

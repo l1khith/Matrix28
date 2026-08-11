@@ -183,8 +183,16 @@ fun FixedCalendarApp(
             task = taskToEdit,
             onDismiss = { showAddTaskDialog = false },
             onSave = { id, title, desc, isReminder, time, priority ->
-                viewModel.saveTask(id, title, desc, isReminder, time, priority)
-                showAddTaskDialog = false
+                if (isReminder) {
+                    pendingNotificationSaveAction = {
+                        viewModel.saveTask(id, title, desc, isReminder, time, priority)
+                        showAddTaskDialog = false
+                    }
+                    launchNotificationPermission()
+                } else {
+                    viewModel.saveTask(id, title, desc, isReminder, time, priority)
+                    showAddTaskDialog = false
+                }
             },
             onSaveRecurring = { id, title, desc, recType, recDays, interval, priority, isActive, endDate, reminderTime ->
                 viewModel.saveRecurringTask(id, title, desc, recType, recDays, interval, priority, isActive, endDate, reminderTime)

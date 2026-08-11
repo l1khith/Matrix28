@@ -1,4 +1,4 @@
-rootProject.name = "MAtrix28"
+rootProject.name = "Matrix28"
 
 pluginManagement {
     repositories {

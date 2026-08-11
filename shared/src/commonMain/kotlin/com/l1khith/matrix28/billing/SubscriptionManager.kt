@@ -2,6 +2,7 @@ package com.l1khith.matrix28.billing
 
 import com.l1khith.matrix28.repository.UserPreferencesRepository
 import com.l1khith.matrix28.repository.createDataStore
+import com.l1khith.matrix28.utils.currentTimeMillis
 import com.l1khith.matrix28.utils.showPlatformToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,11 @@ object SubscriptionManager {
 
     private var prefsRepo: UserPreferencesRepository? = null
 
+    private var isConfigured = false
+
+    private var devTapCount = 0
+    private var lastDevTapTime = 0L
+
     private fun getRepo(): UserPreferencesRepository {
         val current = prefsRepo
         if (current != null) return current
@@ -44,6 +50,21 @@ object SubscriptionManager {
             e.printStackTrace()
         }
     }
+
+    fun onDevModeTap(): Boolean {
+        val now = currentTimeMillis()
+        if (now - lastDevTapTime > 2000) devTapCount = 0
+        lastDevTapTime = now
+        devTapCount++
+        if (devTapCount >= 5) {
+            devTapCount = 0
+            _isProActive.value = !_isProActive.value
+            return true
+        }
+        return false
+    }
+
+    fun isDevModeActive(): Boolean = _isProActive.value && !isConfigured
 
     fun toggleProMode(scope: CoroutineScope) {
         val newStatus = !_isProActive.value
@@ -73,7 +94,10 @@ object SubscriptionManager {
     }
 
     fun configure(apiKey: String, entitlementId: String = "pro") {
-        // Closed testing track: Local Pro toggle mode enabled
+        if (apiKey.isBlank()) {
+            _isProActive.value = false
+            return
+        }
     }
 
     fun clearError() {

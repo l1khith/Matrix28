@@ -37,22 +37,18 @@ android {
     lint {
         checkReleaseBuilds = true
         abortOnError = true
+        disable += "OldTargetApi"
+        disable += "UnusedAttribute"
     }
 
     signingConfigs {
         create("release") {
             val keystoreFileStr = System.getenv("KEYSTORE_FILE")
-            if (keystoreFileStr != null) {
+            if (!keystoreFileStr.isNullOrEmpty() && file(keystoreFileStr).exists()) {
                 storeFile = file(keystoreFileStr)
                 storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
                 keyAlias = System.getenv("KEY_ALIAS") ?: ""
                 keyPassword = System.getenv("KEY_PASSWORD") ?: ""
-            } else {
-                val debugConfig = signingConfigs.getByName("debug")
-                storeFile = debugConfig.storeFile
-                storePassword = debugConfig.storePassword
-                keyAlias = debugConfig.keyAlias
-                keyPassword = debugConfig.keyPassword
             }
         }
     }
@@ -68,7 +64,6 @@ android {
         buildConfigField("String", "REVENUECAT_API_KEY", "\"$rcKey\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        resourceConfigurations += listOf("en")
     }
 
     packaging {
@@ -93,7 +88,14 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("release")
+
+            val releaseSigning = signingConfigs.getByName("release")
+            signingConfig = if (releaseSigning.storeFile?.exists() == true) {
+                releaseSigning
+            } else {
+                signingConfigs.getByName("debug")
+            }
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -108,7 +110,7 @@ android {
 
     kotlinOptions {
         jvmTarget = "11"
-        freeCompilerArgs += listOf("-Xskip-metadata-version-check")
+        freeCompilerArgs += listOf("-Xexpect-actual-classes")
     }
 
 

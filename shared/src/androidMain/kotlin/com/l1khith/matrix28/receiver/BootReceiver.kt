@@ -8,21 +8,26 @@ import com.l1khith.matrix28.data.TaskDatabase
 import com.l1khith.matrix28.utils.FixedCalendarHelper
 import com.l1khith.matrix28.utils.currentTimeMillis
 import com.l1khith.matrix28.utils.scheduleTaskAlarm
-import kotlin.concurrent.thread
+import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val pendingResult = goAsync()
-        thread {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        scope.launch {
             try {
                 AppContext.init(context)
-                val action = intent.action ?: return@thread
+                val action = intent.action ?: return@launch
 
                 // Validate package scope if intent is custom action (Bug #24)
                 val isMidnightRollover = action == "com.l1khith.matrix28.ACTION_MIDNIGHT_ROLLOVER"
                 if (isMidnightRollover && intent.`package` != context.packageName) {
-                    return@thread
+                    return@launch
                 }
 
                 val isBootOrTimeChange = action == Intent.ACTION_BOOT_COMPLETED ||
@@ -52,7 +57,7 @@ class BootReceiver : BroadcastReceiver() {
 
 
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("BootReceiver", "Error during boot/rollover", e)
             } finally {
                 pendingResult.finish()
             }

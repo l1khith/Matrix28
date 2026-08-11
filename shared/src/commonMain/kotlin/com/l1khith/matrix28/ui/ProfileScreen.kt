@@ -135,7 +135,6 @@ fun ProfileScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column {
-                        // Pro Mode Testing Toggle
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -180,12 +179,69 @@ fun ProfileScreen(
 
                         HorizontalDivider(color = MatrixColors.OutlineVariant, thickness = 1.dp)
 
-                        ProfileValueRow(
-                            icon = AppIcons.Subscription,
-                            title = "Subscription Status",
-                            value = if (isProActive) "Pro (Active)" else "Free Tier",
-                            onClick = onOpenSubscription
-                        )
+                        var devToastMessage by remember { mutableStateOf<String?>(null) }
+
+                        LaunchedEffect(devToastMessage) {
+                            devToastMessage?.let {
+                                kotlinx.coroutines.delay(2000)
+                                devToastMessage = null
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    if (SubscriptionManager.onDevModeTap()) {
+                                        val nowPro = SubscriptionManager.isProActive.value
+                                        devToastMessage = if (nowPro) "Dev Mode: PRO ENABLED" else "Dev Mode: PRO DISABLED"
+                                    }
+                                    onOpenSubscription()
+                                }
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = AppIcons.Subscription,
+                                    contentDescription = "Subscription Status",
+                                    tint = MatrixColors.TextSecondary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = "Subscription Status",
+                                    color = MatrixColors.TextHeader,
+                                    fontSize = 14.sp
+                                )
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = if (isProActive) "Pro (Active)" else "Free Tier",
+                                    color = MatrixColors.TextSecondary,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    contentDescription = "Go",
+                                    tint = MatrixColors.TextSecondary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+
+                        devToastMessage?.let { msg ->
+                            Text(
+                                text = msg,
+                                color = Color(0xFF10B981),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                            )
+                        }
 
                         HorizontalDivider(color = MatrixColors.OutlineVariant, thickness = 1.dp)
                         ProfileSettingRow(

@@ -7,10 +7,14 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.l1khith.matrix28.data.TaskDatabase
 import com.l1khith.matrix28.utils.scheduleTaskAlarm
-import kotlin.concurrent.thread
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class AlarmReceiver : BroadcastReceiver() {
 
@@ -35,10 +39,15 @@ class AlarmReceiver : BroadcastReceiver() {
         }
     }
 
-    override fun onReceive(context: Context, intent: Intent) {
-        createNotificationChannel(context)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-        val taskId = intent.getStringExtra("task_id") ?: return
+    override fun onReceive(context: Context, intent: Intent) {
+        val pendingResult = goAsync()
+
+        val taskId = intent.getStringExtra("task_id") ?: run {
+            pendingResult.finish()
+            return
+        }
         val taskTitle = intent.getStringExtra("task_title") ?: "Reminder"
         val taskDesc = intent.getStringExtra("task_desc") ?: ""
 
@@ -71,8 +80,7 @@ class AlarmReceiver : BroadcastReceiver() {
 
         notificationManager.notify(notificationId, builder.build())
 
-        // Check if task is part of a recurring series and schedule next instance
-        thread {
+        scope.launch {
             try {
                 val db = TaskDatabase()
                 val task = db.getAllTasks().find { it.id == taskId }
@@ -89,7 +97,9 @@ class AlarmReceiver : BroadcastReceiver() {
                     }
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("AlarmReceiver", "Error rescheduling recurring task", e)
+            } finally {
+                pendingResult.finish()
             }
         }
 
