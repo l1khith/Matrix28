@@ -4,8 +4,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -379,13 +381,68 @@ fun CreateTaskScreen(
                     border = BorderStroke(1.dp, MatrixColors.OutlineVariant),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Box(modifier = Modifier.padding(16.dp)) {
-                        CategorySelectionUI(
-                            selectedCategory = customCategoryName,
-                            onCategorySelected = { cat -> customCategoryName = cat },
-                            isProActive = isProActive,
-                            onOpenPaywall = onOpenPaywall
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Category",
+                            color = MatrixColors.TextSecondary,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
                         )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        val defaultCategories = listOf(
+                            Pair("Personal", MatrixColors.Tertiary),
+                            Pair("Work", MatrixColors.Secondary),
+                            Pair("Health", MatrixColors.Error),
+                            Pair("Finance", Color(0xFF10B981)),
+                            Pair("Social", Color(0xFF8B5CF6)),
+                            Pair("Education", Color(0xFFF59E0B))
+                        )
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            for ((label, color) in defaultCategories) {
+                                val isSelected = label.equals(customCategoryName, ignoreCase = true)
+                                Card(
+                                    modifier = Modifier.clickable {
+                                        customCategoryName = if (isSelected) null else label
+                                    },
+                                    shape = MatrixShapes.Xl,
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (isSelected) color.copy(alpha = 0.2f) else Color.Transparent
+                                    ),
+                                    border = BorderStroke(
+                                        width = 1.dp,
+                                        color = if (isSelected) color else MatrixColors.OutlineVariant
+                                    )
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(6.dp)
+                                                .clip(CircleShape)
+                                                .background(color)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = label,
+                                            color = if (isSelected) color else MatrixColors.TextHeader,
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
