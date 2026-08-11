@@ -1,13 +1,8 @@
 package com.l1khith.matrix28.utils
 
 import android.Manifest
-import android.app.Activity
-import android.app.KeyguardManager
-import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -76,38 +71,6 @@ actual fun rememberNotificationPermissionLauncher(
             }
         } else {
             onGranted()
-        }
-    }
-}
-
-@Composable
-actual fun rememberSecurityLockLauncher(): () -> Unit {
-    val context = LocalContext.current
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            showToast("Device security lock verified")
-        } else {
-            showToast("Security verification canceled")
-        }
-    }
-    return {
-        try {
-            val keyguardManager = context.getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
-            val intent = keyguardManager?.createConfirmDeviceCredentialIntent(
-                "Matrix 28 Security Lock",
-                "Authenticate using your fingerprint, face, or device PIN"
-            )
-            if (intent != null) {
-                launcher.launch(intent)
-            } else {
-                val settingsIntent = Intent(Settings.ACTION_SECURITY_SETTINGS)
-                context.startActivity(settingsIntent)
-            }
-        } catch (_: Exception) {
-            val settingsIntent = Intent(Settings.ACTION_SECURITY_SETTINGS)
-            context.startActivity(settingsIntent)
         }
     }
 }

@@ -4,9 +4,14 @@ import android.app.TimePickerDialog
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import com.l1khith.matrix28.data.AppContext
 
 actual fun copyToClipboard(text: String) {
@@ -75,4 +80,76 @@ actual fun PlatformTimePicker(
 @Composable
 actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) {
     androidx.activity.compose.BackHandler(enabled = enabled, onBack = onBack)
+}
+
+private fun Context.findFragmentActivity(): FragmentActivity? {
+    var ctx = this
+    while (ctx is android.content.ContextWrapper) {
+        if (ctx is FragmentActivity) return ctx
+        ctx = ctx.baseContext
+    }
+    return null
+}
+
+// ===== APP LOCK: Android Biometric + PIN Implementation =====
+@Composable
+actual fun rememberSecurityLockLauncher(): () -> Unit {
+    val context = LocalContext.current
+
+    return remember(context) {
+        {
+            val activity = context.findFragmentActivity()
+            if (activity == null) {
+                showPlatformToast("App lock requires FragmentActivity")
+                return@remember
+            }
+
+            val executor = ContextCompat.getMainExecutor(activity)
+            val biometricManager = BiometricManager.from(activity)
+
+            val canAuth = biometricManager.canAuthenticate(
+                BiometricManager.Authenticators.BIOMETRIC_WEAK or
+                BiometricManager.Authenticators.DEVICE_CREDENTIAL
+            )
+
+            if (canAuth == BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE) {
+                showPlatformToast("No biometric hardware available")
+                return@remember
+            }
+
+            if (canAuth == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
+                showPlatformToast("Please set up a screen lock in Settings first")
+                return@remember
+            }
+
+            val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                .setTitle("Unlock Matrix 28")
+                .setSubtitle("Verify your identity")
+                .setAllowedAuthenticators(
+                    BiometricManager.Authenticators.BIOMETRIC_WEAK or
+                    BiometricManager.Authenticators.DEVICE_CREDENTIAL
+                )
+                .build()
+
+            val biometricPrompt = BiometricPrompt(
+                activity,
+                executor,
+                object : BiometricPrompt.AuthenticationCallback() {
+                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                        showPlatformToast("Unlocked successfully")
+                    }
+
+                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                        showPlatformToast("Authentication failed: $errString")
+                    }
+
+                    override fun onAuthenticationFailed() {
+                        showPlatformToast("Authentication failed")
+                    }
+                }
+            )
+
+            biometricPrompt.authenticate(promptInfo)
+        }
+    }
 }

@@ -15,3 +15,7 @@ expect fun PlatformTimePicker(
 
 @Composable
 expect fun PlatformBackHandler(enabled: Boolean = true, onBack: () -> Unit)
+
+// ===== APP LOCK: expect declaration =====
+@Composable
+expect fun rememberSecurityLockLauncher(): () -> Unit

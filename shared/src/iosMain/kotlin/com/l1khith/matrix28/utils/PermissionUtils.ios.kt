@@ -19,8 +19,3 @@ actual fun rememberNotificationPermissionLauncher(
 ): () -> Unit {
     return { onGranted() }
 }
-
-@Composable
-actual fun rememberSecurityLockLauncher(): () -> Unit {
-    return { showToast("Security Lock") }
-}

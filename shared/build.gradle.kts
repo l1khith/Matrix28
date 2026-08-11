@@ -56,6 +56,7 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
             implementation(libs.play.services.ads)
+            implementation(libs.androidx.biometric)
         }
         androidUnitTest.dependencies {
             implementation(libs.junit)
